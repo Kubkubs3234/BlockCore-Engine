@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="utf-8">
-  <title>GBA Lua Block Editor</title>
+  <title>BlockCore Engine</title>
   
 <!-- Load Blockly core -->
 <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
@@ -103,135 +103,170 @@
   </xml>
 
   <script>
-    // === 1. BLOKI GBA ===
-    Blockly.Blocks['gba_loop'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Pętla Gry (Zawsze)");
-        this.appendStatementInput("DO").appendField("wykonuj:");
-        this.setColour(120);
-      }
-    };
-    Blockly.Lua['gba_loop'] = function(block) {
-      return 'while true do\n' + Blockly.Lua.statementToCode(block, 'DO') + 'end\n';
-    };
+    // === GLOBALNE ZMIENNE ===
+let workspace;
+let uploadedAssets = [];
 
-    Blockly.Blocks['gba_txtr'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Wczytaj teksturę");
-        this.appendValueInput("WARSTWA").setCheck("Number").appendField("warstwa:");
-        this.appendDummyInput().appendField("plik .bmp:");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true);
-        this.setNextStatement(true);
-        this.setColour(20);
-      }
-    };
-    Blockly.Lua['gba_txtr'] = function(block) {
-      const w = Blockly.Lua.valueToCode(block, 'WARSTWA', Blockly.Lua.ORDER_ATOMIC) || '4';
-      // Pobieramy automatycznie pierwszy plik z zakładki Assets, jeśli użytkownik nic nie wpisał
-      const p = uploadedAssets[0] ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"';
-      return 'txtr(' + w + ', ' + p + ')\n';
-    };
-
-    Blockly.Blocks['gba_clear'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Wyczyść ekran kolorem:");
-        this.appendValueInput("KOLOR").setCheck("Number");
-        this.setPreviousStatement(true);
-        this.setNextStatement(true);
-        this.setColour(160);
-      }
-    };
-    Blockly.Lua['gba_clear'] = function(block) {
-      const k = Blockly.Lua.valueToCode(block, 'KOLOR', Blockly.Lua.ORDER_ATOMIC) || '0';
-      return 'clear(' + k + ')\n';
-    };
-
-    Blockly.Blocks['gba_spr'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Rysuj sprajta ID:");
-        this.appendValueInput("ID").setCheck("Number");
-        this.appendDummyInput().appendField("X:");
-        this.appendValueInput("X").setCheck("Number");
-        this.appendDummyInput().appendField("Y:");
-        this.appendValueInput("Y").setCheck("Number");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true);
-        this.setNextStatement(true);
-        this.setColour(160);
-      }
-    };
-    Blockly.Lua['gba_spr'] = function(block) {
-      const id = Blockly.Lua.valueToCode(block, 'ID', Blockly.Lua.ORDER_ATOMIC) || '0';
-      const x = Blockly.Lua.valueToCode(block, 'X', Blockly.Lua.ORDER_ATOMIC) || '0';
-      const y = Blockly.Lua.valueToCode(block, 'Y', Blockly.Lua.ORDER_ATOMIC) || '0';
-      return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
-    };
-
-    Blockly.Blocks['gba_display'] = {
-      init: function() {
-        this.appendDummyInput().appendField("Rysuj Klatkę (Display)");
-        this.setPreviousStatement(true);
-        this.setNextStatement(true);
-        this.setColour(160);
-      }
-    };
-    Blockly.Lua['gba_display'] = function(block) {
-      return 'display()\n';
-    };
-
-    // Inicjalizacja obszaru roboczego
-    const workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox')
-    });
-
-    // Przełączanie zakładek
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById('tab-' + tabName).classList.add('active');
-      event.target.classList.add('active');
-      if (tabName === 'code') { Blockly.svgResize(workspace); }
+// === REJESTRACJA KLOCKÓW GBA (NOWY STANDARD) ===
+window.onload = function() {
+  
+  // Inicjalizacja klocka pętli
+  Blockly.Blocks['gba_loop'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Pętla Gry (Zawsze)");
+      this.appendStatementInput("DO").appendField("wykonuj:");
+      this.setColour(120);
     }
+  };
+  // Generator Lua dla pętli
+  lua.luaGenerator.forBlock['gba_loop'] = function(block) {
+    const doCode = lua.luaGenerator.statementToCode(block, 'DO');
+    return 'while true do\n' + doCode + 'end\n';
+  };
 
-    // === 2. ASSETY ===
-    let uploadedAssets = [];
-    function addAsset() {
-      const fileInput = document.getElementById('asset-upload');
-      if (fileInput.files.length === 0) return;
-      const name = fileInput.files[0].name;
-      if (!uploadedAssets.includes(name)) {
-        uploadedAssets.push(name);
-        const li = document.createElement('li');
-        li.style = "background:#333; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between;";
-        li.innerHTML = `<span>🖼️ ${name}</span> <button onclick="this.parentElement.remove(); uploadedAssets=uploadedAssets.filter(i=>i!='${name}');" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Usuń</button>`;
-        document.getElementById('asset-list').appendChild(li);
-      }
-      fileInput.value = "";
+  // Inicjalizacja klocka txtr
+  Blockly.Blocks['gba_txtr'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Wczytaj teksturę");
+      this.appendValueInput("WARSTWA").setCheck("Number").appendField("warstwa:");
+      this.appendDummyInput().appendField("plik .bmp:");
+      this.setInputsInline(true);
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setColour(20);
     }
+  };
+  // Generator Lua dla txtr
+  lua.luaGenerator.forBlock['gba_txtr'] = function(block) {
+    const w = lua.luaGenerator.valueToCode(block, 'WARSTWA', lua.luaGenerator.ORDER_ATOMIC) || '4';
+    const p = uploadedAssets.length > 0 ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"';
+    return 'txtr(' + w + ', ' + p + ')\n';
+  };
 
-    // === 3. EKSPORT ===
-    function exportProject() {
-      const n = document.getElementById('game-name').value || "GraGBA";
-      const k = document.getElementById('game-code').value || "AGBA";
-      const a = document.getElementById('game-author').value || "Anonim";
-      
-      let manifestText = "-- Wygenerowano dla BPCore\n";
-      manifestText += "local app = {\n";
-      manifestText += '    name = "' + n + '",\n';
-      manifestText += '    gamecode = "' + k + '",\n';
-      manifestText += "    spritesheets = {\n";
-      uploadedAssets.forEach(asset => { manifestText += '        "' + asset + '",\n'; });
-      manifestText += "    },\n";
-      manifestText += '    scripts = { "main.lua" }\n';
-      manifestText += "}\nreturn app";
-
-      Blockly.Lua.INDENT = '    ';
-      const mainLuaText = Blockly.Lua.workspaceToCode(workspace);
-
-      document.getElementById('output-manifest').value = manifestText;
-      document.getElementById('output-main').value = mainLuaText;
+  // Inicjalizacja klocka clear
+  Blockly.Blocks['gba_clear'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Wyczyść ekran kolorem:");
+      this.appendValueInput("KOLOR").setCheck("Number");
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setColour(160);
     }
+  };
+  // Generator Lua dla clear
+  lua.luaGenerator.forBlock['gba_clear'] = function(block) {
+    const k = lua.luaGenerator.valueToCode(block, 'KOLOR', lua.luaGenerator.ORDER_ATOMIC) || '0';
+    return 'clear(' + k + ')\n';
+  };
+
+  // Inicjalizacja klocka spr
+  Blockly.Blocks['gba_spr'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Rysuj sprajta ID:");
+      this.appendValueInput("ID").setCheck("Number");
+      this.appendDummyInput().appendField("X:");
+      this.appendValueInput("X").setCheck("Number");
+      this.appendDummyInput().appendField("Y:");
+      this.appendValueInput("Y").setCheck("Number");
+      this.setInputsInline(true);
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setColour(160);
+    }
+  };
+  // Generator Lua dla spr
+  lua.luaGenerator.forBlock['gba_spr'] = function(block) {
+    const id = lua.luaGenerator.valueToCode(block, 'ID', lua.luaGenerator.ORDER_ATOMIC) || '0';
+    const x = lua.luaGenerator.valueToCode(block, 'X', lua.luaGenerator.ORDER_ATOMIC) || '0';
+    const y = lua.luaGenerator.valueToCode(block, 'Y', lua.luaGenerator.ORDER_ATOMIC) || '0';
+    return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
+  };
+
+  // Inicjalizacja klocka display
+  Blockly.Blocks['gba_display'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Rysuj Klatkę (Display)");
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setColour(160);
+    }
+  };
+  // Generator Lua dla display
+  lua.luaGenerator.forBlock['gba_display'] = function(block) {
+    return 'display()\n';
+  };
+
+  // URUCHOMIENIE OBSZARU ROBOCZEGO
+  workspace = Blockly.inject('blocklyDiv', {
+    toolbox: document.getElementById('toolbox')
+  });
+
+  // Odświeżenie okna na start
+  setTimeout(function() {
+    Blockly.svgResize(workspace);
+  }, 50);
+};
+
+// === FUNKCJA NAWIGACJI (ZABEZPIECZONA) ===
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById('tab-' + tabName).classList.add('active');
+  
+  if (event && event.target) {
+    event.target.classList.add('active');
+  }
+
+  // Odświeżamy okno tylko jeśli workspace został już stworzony
+  if (tabName === 'code' && workspace) {
+    setTimeout(function() {
+      Blockly.svgResize(workspace);
+    }, 50);
+  }
+}
+
+// === OBSŁUGA ASSETÓW ===
+function addAsset() {
+  const fileInput = document.getElementById('asset-upload');
+  if (fileInput.files.length === 0) return;
+  const name = fileInput.files[0].name;
+  if (!uploadedAssets.includes(name)) {
+    uploadedAssets.push(name);
+    const li = document.createElement('li');
+    li.style = "background:#333; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between;";
+    li.innerHTML = `<span>🖼️ ${name}</span> <button onclick="this.parentElement.remove(); uploadedAssets=uploadedAssets.filter(i=>i!='${name}');" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Usuń</button>`;
+    document.getElementById('asset-list').appendChild(li);
+  }
+  fileInput.value = "";
+}
+
+// === GENEROWANIE KODU ===
+function exportProject() {
+  const n = document.getElementById('game-name').value || "GraGBA";
+  const k = document.getElementById('game-code').value || "AGBA";
+  const a = document.getElementById('game-author').value || "Anonim";
+  
+  let manifestText = "-- Wygenerowano dla BPCore\n";
+  manifestText += "local app = {\n";
+  manifestText += '    name = "' + n + '",\n';
+  manifestText += '    gamecode = "' + k + '",\n';
+  manifestText += "    spritesheets = {\n";
+  uploadedAssets.forEach(asset => { manifestText += '        "' + asset + '",\n'; });
+  manifestText += "    },\n";
+  manifestText += '    scripts = { "main.lua" }\n';
+  manifestText += "}\nreturn app";
+
+  let mainLuaText = "-- Błąd generowania";
+  if (workspace) {
+    lua.luaGenerator.INDENT = '    ';
+    mainLuaText = lua.luaGenerator.workspaceToCode(workspace);
+  }
+
+  document.getElementById('output-manifest').value = manifestText;
+  document.getElementById('output-main').value = mainLuaText;
+}
+
   </script>
 </body>
 </html>
