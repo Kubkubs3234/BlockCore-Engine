@@ -108,13 +108,15 @@
       <block type="gba_btn"></block> <!-- Nasz nowy klocek przycisków -->
     </category>
     
-    <category name="GBA Silnik i Grafika" colour="#a55b5b">
+        <category name="GBA Silnik i Grafika" colour="#a55b5b">
       <block type="gba_loop"></block>
+      <block type="gba_break"></block> <!-- NOWY KLOCEK NA LIŚCIE -->
       <block type="gba_txtr"></block>
       <block type="gba_clear"></block>
       <block type="gba_spr"></block>
       <block type="gba_display"></block>
     </category>
+
   </xml>
 
 
@@ -128,18 +130,35 @@ window.onload = function() {
   // Upewniamy się, że obiekt generatora Lua istnieje
   Blockly.Lua = Blockly.Lua || {};
 
-  // 1. Pętla Gry
+   // 1. POPRAWIONA Pętla Gry (Pozwala na bloki przed i po)
   Blockly.Blocks['gba_loop'] = {
     init: function() {
       this.appendDummyInput().appendField("Pętla Gry (Zawsze)");
       this.appendStatementInput("DO").appendField("wykonuj:");
+      this.setPreviousStatement(true); // Ząbek na górze - bloki przed
+      this.setNextStatement(true);     // Wypustka na dole - bloki po
       this.setColour(120);
     }
   };
   Blockly.Lua['gba_loop'] = function(block) {
     const doCode = Blockly.Lua.statementToCode(block, 'DO');
+    // Generuje standardową pętlę, z której można wyjść za pomocą 'break'
     return 'while true do\n' + doCode + 'end\n';
   };
+
+    // 7. Nowy klocek: Wyjście z pętli na warunek (break)
+  Blockly.Blocks['gba_break'] = {
+    init: function() {
+      this.appendDummyInput().appendField("wyjdź z pętli gry");
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setColour(120); // Ten sam zielony kolor co pętla
+    }
+  };
+  Blockly.Lua['gba_break'] = function(block) {
+    return 'break\n';
+  };
+
 
   // 2. Wczytywanie tekstur (txtr) - Poprawiony wygląd i generator
   Blockly.Blocks['gba_txtr'] = {
