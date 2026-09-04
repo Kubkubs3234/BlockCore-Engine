@@ -110,6 +110,15 @@ let uploadedAssets = [];
 // === REJESTRACJA KLOCKÓW GBA ===
 window.onload = function() {
   
+  // Dynamiczne wykrywanie aktywnego generatora Lua z unpkg
+  // Przeglądarka sprawdzi po kolei: window.lua, window.Lua, Blockly.Lua
+  const luaGen = (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : 
+                 (window.Lua && window.Lua.luaGenerator) ? window.Lua.luaGenerator : 
+                 (window.Lua) ? window.Lua : Blockly.Lua;
+
+  // Pobieramy właściwą tablicę przypisywania bloków (nowy lub stary standard)
+  const forBlock = luaGen.forBlock ? luaGen.forBlock : luaGen;
+
   // 1. Pętla Gry
   Blockly.Blocks['gba_loop'] = {
     init: function() {
@@ -118,8 +127,8 @@ window.onload = function() {
       this.setColour(120);
     }
   };
-  Blockly.Lua['gba_loop'] = function(block) {
-    const doCode = Blockly.Lua.statementToCode(block, 'DO');
+  forBlock['gba_loop'] = function(block) {
+    const doCode = luaGen.statementToCode(block, 'DO');
     return 'while true do\n' + doCode + 'end\n';
   };
 
@@ -135,9 +144,9 @@ window.onload = function() {
       this.setColour(20);
     }
   };
-  Blockly.Lua['gba_txtr'] = function(block) {
-    const w = Blockly.Lua.valueToCode(block, 'WARSTWA', Blockly.Lua.ORDER_ATOMIC) || '4';
-    const p = uploadedAssets.length > 0 ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"';
+  forBlock['gba_txtr'] = function(block) {
+    const w = luaGen.valueToCode(block, 'WARSTWA', luaGen.ORDER_ATOMIC) || '4';
+    const p = uploadedAssets.length > 0 ? '"' + uploadedAssets + '"' : '"sprite.bmp"';
     return 'txtr(' + w + ', ' + p + ')\n';
   };
 
@@ -151,8 +160,8 @@ window.onload = function() {
       this.setColour(160);
     }
   };
-  Blockly.Lua['gba_clear'] = function(block) {
-    const k = Blockly.Lua.valueToCode(block, 'KOLOR', Blockly.Lua.ORDER_ATOMIC) || '0';
+  forBlock['gba_clear'] = function(block) {
+    const k = luaGen.valueToCode(block, 'KOLOR', luaGen.ORDER_ATOMIC) || '0';
     return 'clear(' + k + ')\n';
   };
 
@@ -171,10 +180,10 @@ window.onload = function() {
       this.setColour(160);
     }
   };
-  Blockly.Lua['gba_spr'] = function(block) {
-    const id = Blockly.Lua.valueToCode(block, 'ID', Blockly.Lua.ORDER_ATOMIC) || '0';
-    const x = Blockly.Lua.valueToCode(block, 'X', Blockly.Lua.ORDER_ATOMIC) || '0';
-    const y = Blockly.Lua.valueToCode(block, 'Y', Blockly.Lua.ORDER_ATOMIC) || '0';
+  forBlock['gba_spr'] = function(block) {
+    const id = luaGen.valueToCode(block, 'ID', luaGen.ORDER_ATOMIC) || '0';
+    const x = luaGen.valueToCode(block, 'X', luaGen.ORDER_ATOMIC) || '0';
+    const y = luaGen.valueToCode(block, 'Y', luaGen.ORDER_ATOMIC) || '0';
     return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
   };
 
@@ -187,7 +196,7 @@ window.onload = function() {
       this.setColour(160);
     }
   };
-  Blockly.Lua['gba_display'] = function(block) {
+  forBlock['gba_display'] = function(block) {
     return 'display()\n';
   };
 
@@ -195,6 +204,9 @@ window.onload = function() {
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox')
   });
+
+  // Przechowujemy wykryty generator globalnie na potrzeby funkcji eksportu
+  window.currentLuaGen = luaGen;
 
   // Odświeżenie wymiarów okna na start
   setTimeout(function() {
@@ -214,7 +226,6 @@ function switchTab(tabName) {
     event.target.classList.add('active');
   }
 
-  // Wymuszamy svgResize tylko jeśli workspace już fizycznie istnieje
   if (tabName === 'code' && workspace) {
     setTimeout(function() {
       Blockly.svgResize(workspace);
@@ -226,7 +237,7 @@ function switchTab(tabName) {
 function addAsset() {
   const fileInput = document.getElementById('asset-upload');
   if (!fileInput || fileInput.files.length === 0) return;
-  const name = fileInput.files[0].name; // Naprawione wyciąganie nazwy z obiektu File
+  const name = fileInput.files[0].name; // Prawidłowe pobranie nazwy pierwszego pliku z tablicy
   
   if (!uploadedAssets.includes(name)) {
     uploadedAssets.push(name);
@@ -255,9 +266,11 @@ function exportProject() {
   manifestText += "}\nreturn app";
 
   let mainLuaText = "-- Układaj bloki, aby wygenerować kod main.lua";
-  if (workspace && Blockly.Lua) {
-    Blockly.Lua.INDENT = '    ';
-    mainLuaText = Blockly.Lua.workspaceToCode(workspace);
+  const activeGen = window.currentLuaGen;
+  
+  if (workspace && activeGen) {
+    activeGen.INDENT = '    ';
+    mainLuaText = activeGen.workspaceToCode(workspace);
   }
 
   document.getElementById('output-manifest').value = manifestText;
