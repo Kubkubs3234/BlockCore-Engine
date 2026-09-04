@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>GBA Lua Block Editor</title>
+  
+  <!-- Biblioteki Blockly pobierane z sieci -->
+  <script src="https://unpkg.com"></script>
+  <script src="https://unpkg.com"></script>
+
+  <style>
+    body { font-family: sans-serif; background: #1e1e1e; color: #f4f4f4; padding: 20px; }
+    h1 { color: #007acc; }
+    .tabs-menu { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+    .tab-btn { background: #333; color: #bbb; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px 4px 0 0; margin-right: 5px; }
+    .tab-btn.active { background: #007acc; color: #fff; font-weight: bold; }
+    .export-btn { background: #28a745; color: white; border: none; padding: 10px 20px; cursor: pointer; float: right; border-radius: 4px; font-weight: bold; }
+    .tab-content { display: none; background: #252526; padding: 20px; border-radius: 4px; }
+    .tab-content.active { display: block; }
+    .form-group { margin-bottom: 15px; }
+    input[type="text"] { background: #3c3c3c; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 4px; width: 200px; }
+    #blocklyDiv { height: 450px; width: 100%; border: 1px solid #444; }
+    .code-box { width: 100%; height: 200px; background: #1a1a1a; color: #fff; border: 1px solid #444; font-family: monospace; padding: 10px; resize: none; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+
+  <h1>🎮 GBA Lua Creator</h1>
+  
+  <div class="tabs-container">
+    <!-- Menu Nawigacji -->
+    <div class="tabs-menu">
+      <button class="tab-btn active" onclick="switchTab('details')">📝 Details</button>
+      <button class="tab-btn" onclick="switchTab('assets')">🖼️ Assets</button>
+      <button class="tab-btn" onclick="switchTab('code')">🧩 Code</button>
+      <button class="export-btn" onclick="exportProject()">💾 Generuj Kod</button>
+    </div>
+
+    <!-- ZAKŁADKA 1: DETAILS -->
+    <div id="tab-details" class="tab-content active">
+      <h2>Ustawienia Projektu GBA</h2>
+      <div class="form-group">
+        <label>Nazwa Gry: </label><input type="text" id="game-name" value="MojaGraGBA">
+      </div>
+      <div class="form-group">
+        <label>Kod (4 litery): </label><input type="text" id="game-code" value="AGBA" maxlength="4">
+      </div>
+      <div class="form-group">
+        <label>Autor: </label><input type="text" id="game-author" value="Anonim">
+      </div>
+    </div>
+
+    <!-- ZAKŁADKA 2: ASSETS -->
+    <div id="tab-assets" class="tab-content">
+      <h2>Zasoby Graficzne (.bmp)</h2>
+      <input type="file" id="asset-upload" accept=".bmp" onchange="addAsset()">
+      <ul id="asset-list"></ul>
+    </div>
+
+    <!-- ZAKŁADKA 3: CODE -->
+    <div id="tab-code" class="tab-content">
+      <h2>Układanie Bloków (Lua 5.3)</h2>
+      <div id="blocklyDiv"></div>
+    </div>
+  </div>
+
+  <!-- OKNA PODGLĄDU NA DOLE STRONY -->
+  <div style="margin-top: 30px; border-top: 2px solid #333; padding-top: 20px;">
+    <h2>🔍 Wynikowe Pliki GBA</h2>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 250px;">
+        <h3 style="color: #007acc;">📜 manifest.lua</h3>
+        <textarea id="output-manifest" class="code-box" readonly></textarea>
+      </div>
+      <div style="flex: 1; min-width: 250px;">
+        <h3 style="color: #007acc;">🕹️ main.lua</h3>
+        <textarea id="output-main" class="code-box" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- PALETA BLOKÓW BLOCKLY -->
+  <xml id="toolbox" style="display: none">
+    <category name="Logika" colour="#5b80a5">
+      <block type="controls_if"></block>
+      <block type="logic_boolean"></block>
+      <block type="math_number"></block>
+    </category>
+    <category name="GBA Silnik" colour="#a55b5b">
+      <block type="gba_loop"></block>
+      <block type="gba_txtr"></block>
+      <block type="gba_clear"></block>
+      <block type="gba_spr"></block>
+      <block type="gba_display"></block>
+    </category>
+  </xml>
+
+  <script>
+    // === 1. BLOKI GBA ===
+    Blockly.Blocks['gba_loop'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Pętla Gry (Zawsze)");
+        this.appendStatementInput("DO").appendField("wykonuj:");
+        this.setColour(120);
+      }
+    };
+    Blockly.Lua['gba_loop'] = function(block) {
+      return 'while true do\n' + Blockly.Lua.statementToCode(block, 'DO') + 'end\n';
+    };
+
+    Blockly.Blocks['gba_txtr'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Wczytaj teksturę");
+        this.appendValueInput("WARSTWA").setCheck("Number").appendField("warstwa:");
+        this.appendDummyInput().appendField("plik .bmp:");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);
+        this.setColour(20);
+      }
+    };
+    Blockly.Lua['gba_txtr'] = function(block) {
+      const w = Blockly.Lua.valueToCode(block, 'WARSTWA', Blockly.Lua.ORDER_ATOMIC) || '4';
+      // Pobieramy automatycznie pierwszy plik z zakładki Assets, jeśli użytkownik nic nie wpisał
+      const p = uploadedAssets[0] ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"';
+      return 'txtr(' + w + ', ' + p + ')\n';
+    };
+
+    Blockly.Blocks['gba_clear'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Wyczyść ekran kolorem:");
+        this.appendValueInput("KOLOR").setCheck("Number");
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);
+        this.setColour(160);
+      }
+    };
+    Blockly.Lua['gba_clear'] = function(block) {
+      const k = Blockly.Lua.valueToCode(block, 'KOLOR', Blockly.Lua.ORDER_ATOMIC) || '0';
+      return 'clear(' + k + ')\n';
+    };
+
+    Blockly.Blocks['gba_spr'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Rysuj sprajta ID:");
+        this.appendValueInput("ID").setCheck("Number");
+        this.appendDummyInput().appendField("X:");
+        this.appendValueInput("X").setCheck("Number");
+        this.appendDummyInput().appendField("Y:");
+        this.appendValueInput("Y").setCheck("Number");
+        this.setInputsInline(true);
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);
+        this.setColour(160);
+      }
+    };
+    Blockly.Lua['gba_spr'] = function(block) {
+      const id = Blockly.Lua.valueToCode(block, 'ID', Blockly.Lua.ORDER_ATOMIC) || '0';
+      const x = Blockly.Lua.valueToCode(block, 'X', Blockly.Lua.ORDER_ATOMIC) || '0';
+      const y = Blockly.Lua.valueToCode(block, 'Y', Blockly.Lua.ORDER_ATOMIC) || '0';
+      return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
+    };
+
+    Blockly.Blocks['gba_display'] = {
+      init: function() {
+        this.appendDummyInput().appendField("Rysuj Klatkę (Display)");
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);
+        this.setColour(160);
+      }
+    };
+    Blockly.Lua['gba_display'] = function(block) {
+      return 'display()\n';
+    };
+
+    // Inicjalizacja obszaru roboczego
+    const workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox')
+    });
+
+    // Przełączanie zakładek
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.add('active');
+      event.target.classList.add('active');
+      if (tabName === 'code') { Blockly.svgResize(workspace); }
+    }
+
+    // === 2. ASSETY ===
+    let uploadedAssets = [];
+    function addAsset() {
+      const fileInput = document.getElementById('asset-upload');
+      if (fileInput.files.length === 0) return;
+      const name = fileInput.files[0].name;
+      if (!uploadedAssets.includes(name)) {
+        uploadedAssets.push(name);
+        const li = document.createElement('li');
+        li.style = "background:#333; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between;";
+        li.innerHTML = `<span>🖼️ ${name}</span> <button onclick="this.parentElement.remove(); uploadedAssets=uploadedAssets.filter(i=>i!='${name}');" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Usuń</button>`;
+        document.getElementById('asset-list').appendChild(li);
+      }
+      fileInput.value = "";
+    }
+
+    // === 3. EKSPORT ===
+    function exportProject() {
+      const n = document.getElementById('game-name').value || "GraGBA";
+      const k = document.getElementById('game-code').value || "AGBA";
+      const a = document.getElementById('game-author').value || "Anonim";
+      
+      let manifestText = "-- Wygenerowano dla BPCore\n";
+      manifestText += "local app = {\n";
+      manifestText += '    name = "' + n + '",\n';
+      manifestText += '    gamecode = "' + k + '",\n';
+      manifestText += "    spritesheets = {\n";
+      uploadedAssets.forEach(asset => { manifestText += '        "' + asset + '",\n'; });
+      manifestText += "    },\n";
+      manifestText += '    scripts = { "main.lua" }\n';
+      manifestText += "}\nreturn app";
+
+      Blockly.Lua.INDENT = '    ';
+      const mainLuaText = Blockly.Lua.workspaceToCode(workspace);
+
+      document.getElementById('output-manifest').value = manifestText;
+      document.getElementById('output-main').value = mainLuaText;
+    }
+  </script>
+</body>
+</html>
