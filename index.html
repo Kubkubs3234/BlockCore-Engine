@@ -125,18 +125,29 @@ window.onload = function() {
     return 'while true do\n' + doCode + 'end\n';
   };
 
-  // 2. Definicja klocka: Wczytywanie tekstur (txtr)
+    // 2. Całkowicie poprawiona definicja wizualna klocka gba_txtr
   Blockly.Blocks['gba_txtr'] = {
     init: function() {
-      this.appendDummyInput().appendField("Wczytaj teksturę");
-      this.appendValueInput("WARSTWA").setCheck("Number").appendField("warstwa:");
-      this.appendDummyInput().appendField("plik .bmp:");
-      this.setInputsInline(true);
+      this.appendDummyInput()
+          .appendField("Wczytaj teksturę");
+      
+      this.appendValueInput("WARSTWA")
+          .setCheck("Number")
+          .appendField("warstwa:");
+          
+      // POPRAWKA: Najpierw dodajemy napis informacyjny, a potem gniazdo wejściowe
+      this.appendValueInput("PLIK")
+          .setCheck("String")
+          .appendField("plik .bmp:");
+          
+      this.setInputsInline(true); // Układanie elementów w jednej poziomej linii
       this.setPreviousStatement(true);
       this.setNextStatement(true);
       this.setColour(20);
     }
   };
+
+  
   Blockly.Lua['gba_txtr'] = function(block) {
     const w = Blockly.Lua.valueToCode(block, 'WARSTWA', Blockly.Lua.ORDER_ATOMIC) || '4';
     const p = uploadedAssets.length > 0 ? '"' + uploadedAssets + '"' : '"sprite.bmp"';
