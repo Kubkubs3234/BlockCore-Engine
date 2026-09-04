@@ -86,14 +86,29 @@
     </div>
   </div>
 
-  <!-- PALETA BLOKÓW BLOCKLY -->
+  <!-- ROZBUDOWANA PALETA BLOKÓW (TOOLBOX) -->
   <xml id="toolbox" style="display: none">
     <category name="Logika" colour="#5b80a5">
       <block type="controls_if"></block>
+      <block type="logic_compare"></block> <!-- Porównania: =, <, >, != -->
+      <block type="logic_operation"></block> <!-- ORAZ / LUB -->
       <block type="logic_boolean"></block>
-      <block type="math_number"></block>
     </category>
-    <category name="GBA Silnik" colour="#a55b5b">
+    
+    <category name="Zmienne i Tekst" colour="#a55b80">
+      <button text="Stwórz zmienną..." callbackKey="CREATE_VARIABLE"></button>
+      <block type="variables_set"></block> <!-- Ustaw zmienną na -->
+      <block type="variables_get"></block> <!-- Pobierz zmienną -->
+      <block type="math_number"></block>   <!-- Liczby -->
+      <block type="text"></block>          <!-- KLOCEK NA TEKST -->
+      <block type="math_arithmetic"></block> <!-- Dodawanie, odejmowanie, zmienianie o wartość -->
+    </category>
+    
+    <category name="GBA Sterowanie" colour="#995ba5">
+      <block type="gba_btn"></block> <!-- Nasz nowy klocek przycisków -->
+    </category>
+    
+    <category name="GBA Silnik i Grafika" colour="#a55b5b">
       <block type="gba_loop"></block>
       <block type="gba_txtr"></block>
       <block type="gba_clear"></block>
@@ -102,15 +117,18 @@
     </category>
   </xml>
 
+
   <script>
     // === GLOBALNE ZMIENNE ===
 let workspace;
 let uploadedAssets = [];
-
 // === REJESTRACJA KLOCKÓW GBA ===
 window.onload = function() {
   
-  // 1. Definicja klocka: Pętla Gry
+  // Upewniamy się, że obiekt generatora Lua istnieje
+  Blockly.Lua = Blockly.Lua || {};
+
+  // 1. Pętla Gry
   Blockly.Blocks['gba_loop'] = {
     init: function() {
       this.appendDummyInput().appendField("Pętla Gry (Zawsze)");
@@ -118,43 +136,33 @@ window.onload = function() {
       this.setColour(120);
     }
   };
-  // Uniwersalny i bezpieczny zapis dla generatora Lua
-  Blockly.Lua = Blockly.Lua || {};
   Blockly.Lua['gba_loop'] = function(block) {
     const doCode = Blockly.Lua.statementToCode(block, 'DO');
     return 'while true do\n' + doCode + 'end\n';
   };
 
-    // 2. Całkowicie poprawiona definicja wizualna klocka gba_txtr
+  // 2. Wczytywanie tekstur (txtr) - Poprawiony wygląd i generator
   Blockly.Blocks['gba_txtr'] = {
     init: function() {
-      this.appendDummyInput()
-          .appendField("Wczytaj teksturę");
-      
-      this.appendValueInput("WARSTWA")
-          .setCheck("Number")
-          .appendField("warstwa:");
-          
-      // POPRAWKA: Najpierw dodajemy napis informacyjny, a potem gniazdo wejściowe
-      this.appendValueInput("PLIK")
-          .setCheck("String")
-          .appendField("plik .bmp:");
-          
-      this.setInputsInline(true); // Układanie elementów w jednej poziomej linii
+      this.appendDummyInput().appendField("Wczytaj teksturę");
+      this.appendValueInput("WARSTWA").setCheck("Number").appendField("warstwa:");
+      this.appendValueInput("PLIK").setCheck("String").appendField("plik .bmp:");
+      this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
       this.setColour(20);
     }
   };
-
-  
   Blockly.Lua['gba_txtr'] = function(block) {
     const w = Blockly.Lua.valueToCode(block, 'WARSTWA', Blockly.Lua.ORDER_ATOMIC) || '4';
-    const p = uploadedAssets.length > 0 ? '"' + uploadedAssets + '"' : '"sprite.bmp"';
+    let p = Blockly.Lua.valueToCode(block, 'PLIK', Blockly.Lua.ORDER_ATOMIC);
+    if (!p) {
+      p = uploadedAssets.length > 0 ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"';
+    }
     return 'txtr(' + w + ', ' + p + ')\n';
   };
 
-  // 3. Definicja klocka: Czyszczenie ekranu (clear)
+  // 3. Czyszczenie ekranu (clear)
   Blockly.Blocks['gba_clear'] = {
     init: function() {
       this.appendDummyInput().appendField("Wyczyść ekran kolorem:");
@@ -169,7 +177,7 @@ window.onload = function() {
     return 'clear(' + k + ')\n';
   };
 
-  // 4. Definicja klocka: Rysuj sprajta (spr)
+  // 4. Rysowanie obiektów (spr)
   Blockly.Blocks['gba_spr'] = {
     init: function() {
       this.appendDummyInput().appendField("Rysuj sprajta ID:");
@@ -191,7 +199,7 @@ window.onload = function() {
     return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
   };
 
-  // 5. Definicja klocka: Ekran wyświetlania (display)
+  // 5. Ekran wyświetlania (display)
   Blockly.Blocks['gba_display'] = {
     init: function() {
       this.appendDummyInput().appendField("Rysuj Klatkę (Display)");
@@ -204,16 +212,41 @@ window.onload = function() {
     return 'display()\n';
   };
 
+  // 6. Przyciski pada GBA (btn)
+  Blockly.Blocks['gba_btn'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField("przycisk")
+          .appendField(new Blockly.FieldDropdown([
+            ["A", "0"], ["B", "1"], ["SELECT", "2"], ["START", "3"],
+            ["PRAWO", "4"], ["LEWO", "5"], ["GÓRA", "6"], ["DÓŁ", "7"],
+            ["R (Trigger)", "8"], ["L (Trigger)", "9"]
+          ]), "BUTTON");
+      this.setOutput(true, "Boolean");
+      this.setColour(210);
+    }
+  };
+  Blockly.Lua['gba_btn'] = function(block) {
+    const buttonId = block.getFieldValue('BUTTON');
+    return ['btn(' + buttonId + ')', Blockly.Lua.ORDER_ATOMIC];
+  };
   // INICJALIZACJA OBSZARU ROBOCZEGO
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox')
   });
 
+  // DODATEK: Obsługa przycisku "Stwórz zmienną..." z menu bocznego
+  if (workspace && workspace.registerButtonCallback) {
+    workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
+      Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
+    });
+  }
+
   // Odświeżenie wymiarów okna na start
   setTimeout(function() {
     if (workspace) { Blockly.svgResize(workspace); }
   }, 100);
-};
+}; // Koniec funkcji window.onload
 
 // === FUNKCJA NAWIGACJI ===
 function switchTab(tabName) {
