@@ -88,36 +88,42 @@
 
   <!-- ROZBUDOWANA PALETA BLOKÓW (TOOLBOX) -->
   <xml id="toolbox" style="display: none">
-    <category name="Logika" colour="#5b80a5">
+    <category name="Konstrukcja i Start" colour="#655ba5">
+      <block type="gba_start"></block> <!-- NOWY KLOCEK STARTU -->
+      <block type="gba_loop"></block>
+      <block type="gba_break"></block>
+    </category>
+    
+    <category name="Logika i Kolizje" colour="#5b80a5">
       <block type="controls_if"></block>
-      <block type="logic_compare"></block> <!-- Porównania: =, <, >, != -->
-      <block type="logic_operation"></block> <!-- ORAZ / LUB -->
+      <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
       <block type="logic_boolean"></block>
+      <block type="gba_collision"></block> <!-- NOWY KLOCEK KOLIZJI -->
     </category>
     
     <category name="Zmienne i Tekst" colour="#a55b80">
       <button text="Stwórz zmienną..." callbackKey="CREATE_VARIABLE"></button>
-      <block type="variables_set"></block> <!-- Ustaw zmienną na -->
-      <block type="variables_get"></block> <!-- Pobierz zmienną -->
-      <block type="math_number"></block>   <!-- Liczby -->
-      <block type="text"></block>          <!-- KLOCEK NA TEKST -->
-      <block type="math_arithmetic"></block> <!-- Dodawanie, odejmowanie, zmienianie o wartość -->
+      <block type="variables_set"></block>
+      <block type="variables_get"></block>
+      <block type="math_number"></block>
+      <block type="text"></block> <!-- KLOCEK DO WPISYWANIA TEKSTU -->
+      <block type="math_arithmetic"></block>
     </category>
     
     <category name="GBA Sterowanie" colour="#995ba5">
-      <block type="gba_btn"></block> <!-- Nasz nowy klocek przycisków -->
+      <block type="gba_btn"></block>
     </category>
     
-        <category name="GBA Silnik i Grafika" colour="#a55b5b">
-      <block type="gba_loop"></block>
-      <block type="gba_break"></block> <!-- NOWY KLOCEK NA LIŚCIE -->
+    <category name="GBA Grafika" colour="#5ba55b">
       <block type="gba_txtr"></block>
       <block type="gba_clear"></block>
       <block type="gba_spr"></block>
+      <block type="gba_print"></block> <!-- NOWY KLOCEK TEKSTU -->
       <block type="gba_display"></block>
     </category>
-
   </xml>
+
 
 
   <script>
