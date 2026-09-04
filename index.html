@@ -159,7 +159,70 @@ window.onload = function() {
     return 'break\n';
   };
 
+    // 8. Klocek KAPELUSZ: Kiedy uruchomiono (Start)
+  Blockly.Blocks['gba_start'] = {
+    init: function() {
+      this.appendDummyInput().appendField("🏁 Kiedy uruchomiono (Start)");
+      this.setNextStatement(true); // Ząbek tylko na dole
+      this.setColour(65); // Brązowo-pomarańczowy kolor startowy
+    }
+  };
+  // Klocek startowy sam w sobie nie generuje kodu, jest tylko punktem wyjścia
+  Blockly.Lua['gba_start'] = function(block) {
+    return ''; 
+  };
 
+  // 9. Klocek: Narysuj tekst (Print)
+  Blockly.Blocks['gba_print'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Narysuj tekst:");
+      this.appendValueInput("TEKST").setCheck("String");
+      this.appendDummyInput().appendField("X:");
+      this.appendValueInput("X").setCheck("Number");
+      this.appendDummyInput().appendField("Y:");
+      this.appendValueInput("Y").setCheck("Number");
+      this.setInputsInline(true);
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.setColour(160);
+    }
+  };
+  Blockly.Lua['gba_print'] = function(block) {
+    const t = Blockly.Lua.valueToCode(block, 'TEKST', Blockly.Lua.ORDER_ATOMIC) || '" "';
+    const x = Blockly.Lua.valueToCode(block, 'X', Blockly.Lua.ORDER_ATOMIC) || '0';
+    const y = Blockly.Lua.valueToCode(block, 'Y', Blockly.Lua.ORDER_ATOMIC) || '0';
+    return 'print(' + t + ', ' + x + ', ' + y + ')\n';
+  };
+
+  // 10. Klocek: Czy kolizja AABB (Zwraca Prawda/Fałsz)
+  Blockly.Blocks['gba_collision'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Kolizja obiektu 1 X:");
+      this.appendValueInput("X1").setCheck("Number");
+      this.appendDummyInput().appendField("Y:");
+      this.appendValueInput("Y1").setCheck("Number");
+      this.appendDummyInput().appendField("z obiektem 2 X:");
+      this.appendValueInput("X2").setCheck("Number");
+      this.appendDummyInput().appendField("Y:");
+      this.appendValueInput("Y2").setCheck("Number");
+      this.setInputsInline(true);
+      this.setOutput(true, "Boolean"); // Można wpiąć do klocka "Jeżeli"
+      this.setColour(210); // Niebieski klocek warunkowy
+    }
+  };
+  Blockly.Lua['gba_collision'] = function(block) {
+    const x1 = Blockly.Lua.valueToCode(block, 'X1', Blockly.Lua.ORDER_ATOMIC) || '0';
+    const y1 = Blockly.Lua.valueToCode(block, 'Y1', Blockly.Lua.ORDER_ATOMIC) || '0';
+    const x2 = Blockly.Lua.valueToCode(block, 'X2', Blockly.Lua.ORDER_ATOMIC) || '0';
+    const y2 = Blockly.Lua.valueToCode(block, 'Y2', Blockly.Lua.ORDER_ATOMIC) || '0';
+    
+    // Generuje czysty matematyczny algorytm AABB dla obiektów 16x16
+    const formula = x1 + ' < ' + x2 + ' + 16 and ' + x1 + ' + 16 > ' + x2 + ' and ' + y1 + ' < ' + y2 + ' + 16 and ' + y1 + ' + 16 > ' + y2;
+    return [formula, Blockly.Lua.ORDER_ATOMIC];
+  };
+
+
+  
   // 2. Wczytywanie tekstur (txtr) - Poprawiony wygląd i generator
   Blockly.Blocks['gba_txtr'] = {
     init: function() {
