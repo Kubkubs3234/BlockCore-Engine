@@ -371,37 +371,76 @@ function addAsset() {
   fileInput.value = "";
 }
 
-// === GENEROWANIE I EKSPORT PLIKÓW ===
-// === GENEROWANIE I EKSPORT PLIKÓW (WERSJA POPRAWIONA) ===
+// === OSTATECZNIE NAPRAWIONY EKSPORT PLIKÓW ===
 function exportProject() {
   const n = document.getElementById('game-name').value || "GraGBA";
   const k = document.getElementById('game-code').value || "AGBA";
   const a = document.getElementById('game-author').value || "Anonim";
   
-  // 1. Budowanie manifest.lua
+  // 1. BEZPIECZNE POBIERANIE ASSETÓW Z KLOCKÓW
+  // Jeśli użytkownik ma klocek txtr na ekranie, automatycznie wyciągamy nazwę pliku
+  let dynamicAssets = [...uploadedAssets];
+  if (workspace) {
+    const allBlocks = workspace.getAllBlocks(false);
+    allBlocks.forEach(block => {
+      if (block.type === 'gba_txtr') {
+        // Próbujemy pobrać wpisaną nazwę pliku z klocka tekstowego
+        const fileBlock = block.getInputTargetBlock('PLIK');
+        if (fileBlock && fileBlock.type === 'text') {
+          const val = fileBlock.getFieldValue('TEXT');
+          if (val && !dynamicAssets.includes(val)) {
+            dynamicAssets.push(val);
+          }
+        }
+      }
+    });
+  }
+
+  // 2. BUDOWANIE MANIFEST.LUA
   let manifestText = "-- Wygenerowano dla BPCore\n";
   manifestText += "local app = {\n";
   manifestText += '    name = "' + n + '",\n';
   manifestText += '    gamecode = "' + k + '",\n';
   manifestText += "    spritesheets = {\n";
-  uploadedAssets.forEach(asset => { manifestText += '        "' + asset + '",\n'; });
+  dynamicAssets.forEach(asset => { 
+    manifestText += '        "' + asset + '",\n'; 
+  });
   manifestText += "    },\n";
   manifestText += '    scripts = { "main.lua" }\n';
   manifestText += "}\nreturn app";
-
-  // 2. Pobieranie kodu Lua z klocków z obsługą obiektów unpkg
-  let mainLuaText = "-- Układaj bloki, aby wygenerować kod main.lua";
   
-  // Szukamy aktywnego generatora w strukturze unpkg (window.Lua lub Blockly.Lua)
-  const activeGenerator = window.Lua ? window.Lua : Blockly.Lua;
+  // Wrzucamy manifest od razu do okienka (uniezależniamy go od błędów Blockly)
+  document.getElementById('output-manifest').value = manifestText;
 
-  if (workspace && activeGenerator && typeof activeGenerator.workspaceToCode === "function") {
-    activeGenerator.INDENT = '    ';
-    mainLuaText = activeGenerator.workspaceToCode(workspace);
+  // 3. KULOODPORNE POBIERANIE KODU LUA (MAIN.LUA)
+  let mainLuaText = "";
+  
+  try {
+    // Sprawdzamy pokrewne nazwy obiektów generatorów w unpkg
+    const gen = window.Lua ? window.Lua : (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : Blockly.Lua;
+    
+    if (workspace && gen) {
+      gen.INDENT = '    ';
+      // Próba A: Standardowa funkcja unpkg
+      if (typeof gen.workspaceToCode === "function") {
+        mainLuaText = gen.workspaceToCode(workspace);
+      } 
+      // Próba B: Spadowa funkcja rdzenia Blockly
+      else if (Blockly.Lua && typeof Blockly.Lua.workspaceToCode === "function") {
+        Blockly.Lua.INDENT = '    ';
+        mainLuaText = Blockly.Lua.workspaceToCode(workspace);
+      }
+    }
+  } catch (err) {
+    mainLuaText = "-- Błąd krytyczny generatora: " + err.message + "\n";
   }
 
-  // 3. Wrzucenie gotowych kodów do okienek tekstowych na stronie
-  document.getElementById('output-manifest').value = manifestText;
+  // Zabezpieczenie na wypadek, gdyby kod wyszedł całkowicie pusty
+  if (!mainLuaText || mainLuaText.trim() === "") {
+    mainLuaText = "-- Układaj bloki w pętli gry, aby wygenerować kod main.lua";
+  }
+
+  // Wrzucamy main.lua do drugiego okienka
   document.getElementById('output-main').value = mainLuaText;
 }
 
