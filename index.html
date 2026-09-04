@@ -372,11 +372,13 @@ function addAsset() {
 }
 
 // === GENEROWANIE I EKSPORT PLIKÓW ===
+// === GENEROWANIE I EKSPORT PLIKÓW (WERSJA POPRAWIONA) ===
 function exportProject() {
   const n = document.getElementById('game-name').value || "GraGBA";
   const k = document.getElementById('game-code').value || "AGBA";
   const a = document.getElementById('game-author').value || "Anonim";
   
+  // 1. Budowanie manifest.lua
   let manifestText = "-- Wygenerowano dla BPCore\n";
   manifestText += "local app = {\n";
   manifestText += '    name = "' + n + '",\n';
@@ -387,24 +389,22 @@ function exportProject() {
   manifestText += '    scripts = { "main.lua" }\n';
   manifestText += "}\nreturn app";
 
+  // 2. Pobieranie kodu Lua z klocków z obsługą obiektów unpkg
   let mainLuaText = "-- Układaj bloki, aby wygenerować kod main.lua";
   
-  // Bezpieczne sprawdzanie generatora bez względu na unpkg
-  const currentGenerator = Blockly.Lua || window.lua || (window.javascript && window.javascript.luaGenerator);
+  // Szukamy aktywnego generatora w strukturze unpkg (window.Lua lub Blockly.Lua)
+  const activeGenerator = window.Lua ? window.Lua : Blockly.Lua;
 
-  if (workspace && currentGenerator) {
-    currentGenerator.INDENT = '    ';
-    // Obsługa nowej metody lub spadkowej wstecznie
-    if (typeof currentGenerator.workspaceToCode === "function") {
-      mainLuaText = currentGenerator.workspaceToCode(workspace);
-    } else if (Blockly.Lua && typeof Blockly.Lua.workspaceToCode === "function") {
-      mainLuaText = Blockly.Lua.workspaceToCode(workspace);
-    }
+  if (workspace && activeGenerator && typeof activeGenerator.workspaceToCode === "function") {
+    activeGenerator.INDENT = '    ';
+    mainLuaText = activeGenerator.workspaceToCode(workspace);
   }
 
+  // 3. Wrzucenie gotowych kodów do okienek tekstowych na stronie
   document.getElementById('output-manifest').value = manifestText;
   document.getElementById('output-main').value = mainLuaText;
 }
+
 
   </script>
 </body>
