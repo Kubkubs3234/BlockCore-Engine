@@ -12,41 +12,32 @@
   <script src="https://unpkg.com/blockly/lua_compressed.js"></script>
   <script src="https://unpkg.com/blockly/msg/en.js"></script>
 
-    <style>
+      <style>
     /* OGÓLNE STYLE STRONY (DARK THEME) */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      background: #121212; 
+      background: #1e1e1e; 
       color: #f4f4f4; 
       margin: 0; 
       padding: 20px; 
     }
     h1 { color: #007acc; margin-top: 0; }
     
-    /* MENU NAWIGACJI (CZARNY TOOLBAR) */
-    .tabs-menu { 
-      background: #000000; 
-      border: 1px solid #222; 
-      padding: 10px; 
-      margin-bottom: 20px; 
-      border-radius: 6px; 
-      display: flex; 
-      align-items: center; 
-    }
-    
+    /* MENU NAWIGACJI (ZAKŁADKI) */
+    .tabs-menu { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
     .tab-btn { 
-      background: #1e1e1e; 
+      background: #333; 
       color: #bbb; 
-      border: 1px solid #333; 
+      border: none; 
       padding: 10px 25px; 
       cursor: pointer; 
-      border-radius: 4px; 
+      border-radius: 4px 4px 0 0; 
       font-size: 14px; 
-      margin-right: 8px; 
+      margin-right: 5px; 
       transition: 0.2s; 
     }
-    .tab-btn:hover { background: #333; color: #fff; }
-    .tab-btn.active { background: #007acc; color: #fff; font-weight: bold; border-color: #007acc; }
+    .tab-btn:hover { background: #444; color: #fff; }
+    .tab-btn.active { background: #007acc; color: #fff; font-weight: bold; }
     
     /* PRZYCISK GENEROWANIA KODU */
     .export-btn { 
@@ -55,10 +46,9 @@
       border: none; 
       padding: 10px 20px; 
       cursor: pointer; 
-      margin-left: auto; /* Wyrównanie do prawej krawędzi paska */
+      float: right; 
       border-radius: 4px; 
       font-weight: bold; 
-      transition: 0.2s;
     }
     .export-btn:hover { background: #218838; }
     
@@ -118,7 +108,7 @@
     }
 
     /* ======================================================== */
-    /* NAPRAWA CZCIONEK NA KLOCKACH (A, ITEM, CYFRY)            */
+    /* NAPRAWA CZCIONEK NA KLOCKACH ORAZ W MENU ROZWIJANYCH     */
     /* ======================================================== */
     
     /* 1. Wymuszenie jasnego/białego tekstu na wszystkich klockach */
@@ -129,23 +119,43 @@
       font-family: 'Segoe UI', sans-serif !important;
     }
 
-    /* 2. NAPRAWA LIST ROZWIJANYCH (Dropdown np. przycisk A, B, item) */
-    /* Wymuszamy, aby napisy opcji wewnątrz klocka były zawsze białe */
+    /* 2. OSTATECZNA NAPRAWA MENU ROZWIJANEGO (ZMIENNE / OPERACJE) */
+    /* Ustawiamy ciemne tło dla całego wyskakującego kontenera menu dropdown */
+    .blocklyDropdownMenu,
+    .blocklyDropdownMenuDiv,
+    div.blocklyDropdownMenuDiv,
+    .goog-menu {
+      background-color: #1a1a1a !important;
+      border: 1px solid #444 !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
+    }
+
+    /* Wymuszamy BIAŁY tekst dla opcji w menu (np. nazw zmiennych) */
+    .goog-menuitem,
+    .goog-menuitem-content,
+    .goog-menuitem span,
+    div.goog-menuitem-content {
+      color: #ffffff !important;
+      font-family: sans-serif !important;
+      font-size: 13px !important;
+    }
+
+    /* Efekt najechania myszką (hover) na opcję w menu dla lepszej widoczności */
+    .goog-menuitem-highlight,
+    .goog-menuitem:hover {
+      background-color: #007acc !important; /* Niebieskie podświetlenie */
+    }
+    .goog-menuitem-highlight .goog-menuitem-content,
+    .goog-menuitem:hover .goog-menuitem-content {
+      color: #ffffff !important;
+    }
+
+    /* Styl tekstu wewnątrz pól wyboru bezpośrednio na klockach */
     .blocklyFieldDropdown text,
     .blocklyEditableText text,
     g.blocklyEditableText text,
     g.blocklyFieldDropdown text {
-      fill: #ffffff !important;   /* Zmienia czarne napisy na klockach na białe */
-      color: #ffffff !important;
-    }
-
-    /* Ciemne tło dla menu, które wyskakuje po kliknięciu np. listy przycisków */
-    .blocklyDropdownMenu,
-    .blocklyDropdownMenuDiv,
-    div.blocklyDropdownMenuDiv {
-      background-color: #1a1a1a !important;
-      border: 1px solid #444 !important;
-      color: #ffffff !important;
+      fill: #ffffff !important;
     }
 
     /* 3. NAPRAWA PÓL WPISYWANIA WARTOŚCI (Liczby, Teksty) */
@@ -156,11 +166,12 @@
       font-family: sans-serif !important;
     }
 
-    /* Zmiana koloru małych strzałek w listach rozwijanych klocków na białe */
+    /* Zmiana koloru małych strzałek dropdownów na klockach na białe */
     .blocklyDropdownTriangle {
       fill: #ffffff !important;
     }
   </style>
+
 </head>
 
 <body>
