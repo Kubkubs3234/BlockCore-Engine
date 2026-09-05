@@ -12,6 +12,9 @@
   <script src="https://unpkg.com/blockly/lua_compressed.js"></script>
   <script src="https://unpkg.com/blockly/msg/en.js"></script>
 
+  <!-- Biblioteka JSZip do generowania archiwów ZIP w przeglądarce -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
   <style>
     /* OGÓLNE STYLE STRONY (DARK THEME) */
     body { 
@@ -39,9 +42,8 @@
     .tab-btn:hover { background: #444; color: #fff; }
     .tab-btn.active { background: #007acc; color: #fff; font-weight: bold; }
     
-    /* PRZYCISK GENEROWANIA KODU */
-    .export-btn { 
-      background: #28a745; 
+    /* PRZYCISKI AKCJI */
+    .action-btn { 
       color: white; 
       border: none; 
       padding: 10px 20px; 
@@ -49,8 +51,13 @@
       float: right; 
       border-radius: 4px; 
       font-weight: bold; 
+      margin-left: 10px;
     }
+    .export-btn { background: #28a745; }
     .export-btn:hover { background: #218838; }
+    
+    .template-btn { background: #17a2b8; }
+    .template-btn:hover { background: #138496; }
     
     /* KONTENERY ZAKŁADEK */
     .tab-content { 
@@ -102,87 +109,30 @@
     }
 
     /* MODYFIKACJE CZARNEGO TRYBU DLA GOOGLE BLOCKLY */
-    .blocklyGridPattern line {
-      stroke: #333333 !important;
-    }
-
-    .blocklyText,
-    text.blocklyText,
-    .blocklyFlyoutLabelText {
+    .blocklyGridPattern line { stroke: #333333 !important; }
+    .blocklyText, text.blocklyText, .blocklyFlyoutLabelText {
       fill: #ffffff !important;
       font-family: 'Segoe UI', sans-serif !important;
     }
-
-    /* MENU ROZWIJANE (POPUP) */
-    .blocklyDropdownMenu,
-    .blocklyDropdownMenuDiv,
-    div.blocklyDropdownMenuDiv,
-    .goog-menu,
-    .blocklyMenu {
+    .blocklyDropdownMenu, .blocklyDropdownMenuDiv, div.blocklyDropdownMenuDiv, .goog-menu, .blocklyMenu {
       background-color: #e0e0e0 !important;
       border: 1px solid #aaa !important;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
       border-radius: 4px !important;
     }
-
-    .goog-menuitem,
-    .goog-menuitem-content,
-    .goog-menuitem span,
-    div.goog-menuitem-content,
-    .blocklyMenuItem,
-    .blocklyMenuItemContent {
+    .goog-menuitem, .goog-menuitem-content, .goog-menuitem span, div.goog-menuitem-content, .blocklyMenuItem, .blocklyMenuItemContent {
       color: #000000 !important;
       font-family: sans-serif !important;
       font-size: 13px !important;
       font-weight: 500 !important;
     }
-
-    .goog-menuitem-highlight,
-    .goog-menuitem:hover,
-    .blocklyMenuItemHighlight {
-      background-color: #007acc !important;
-    }
-    .goog-menuitem-highlight .goog-menuitem-content,
-    .goog-menuitem:hover .goog-menuitem-content,
-    .blocklyMenuItemHighlight .blocklyMenuItemContent {
-      color: #ffffff !important;
-    }
-
-    /* POLA INPUT / DROPDOWN / NUMBER NA KLOCKACH */
-    .blocklyFieldDropdown text,
-    .blocklyFieldVariable text,
-    .blocklyFieldTextInput text,
-    .blocklyFieldNumber text,
-    .blocklyEditableText text,
-    g.blocklyEditableText text,
-    g.blocklyFieldDropdown text {
-      fill: #000000 !important;
-      font-weight: 600 !important;
-    }
-
-    .blocklyEditableText > rect,
-    .blocklyFieldDropdown > rect,
-    .blocklyFieldVariable > rect,
-    .blocklyFieldTextInput > rect,
-    .blocklyFieldNumber > rect {
-      fill: #e0e0e0 !important;
-      fill-opacity: 0.9 !important;
-    }
-
-    .blocklyDropdownTriangle {
-      fill: #000000 !important;
-    }
-
-    .blocklyHtmlInput {
-      background-color: #f0f0f0 !important;
-      color: #000000 !important;
-      border: 1px solid #999 !important;
-      font-family: sans-serif !important;
-      font-weight: bold !important;
-      border-radius: 2px !important;
-    }
+    .goog-menuitem-highlight, .goog-menuitem:hover, .blocklyMenuItemHighlight { background-color: #007acc !important; }
+    .goog-menuitem-highlight .goog-menuitem-content, .goog-menuitem:hover .goog-menuitem-content, .blocklyMenuItemHighlight .blocklyMenuItemContent { color: #ffffff !important; }
+    .blocklyFieldDropdown text, .blocklyFieldVariable text, .blocklyFieldTextInput text, .blocklyFieldNumber text, .blocklyEditableText text, g.blocklyEditableText text, g.blocklyFieldDropdown text { fill: #000000 !important; font-weight: 600 !important; }
+    .blocklyEditableText > rect, .blocklyFieldDropdown > rect, .blocklyFieldVariable > rect, .blocklyFieldTextInput > rect, .blocklyFieldNumber > rect { fill: #e0e0e0 !important; fill-opacity: 0.9 !important; }
+    .blocklyDropdownTriangle { fill: #000000 !important; }
+    .blocklyHtmlInput { background-color: #f0f0f0 !important; color: #000000 !important; border: 1px solid #999 !important; font-family: sans-serif !important; font-weight: bold !important; border-radius: 2px !important; }
   </style>
-
 </head>
 
 <body>
@@ -192,8 +142,11 @@
   <div class="tabs-container">
     <div class="tabs-menu">
       <button class="tab-btn active" onclick="switchTab('details')">📝 Details</button>
-      <button class="tab-btn" onclick="switchTab('code')">🧩 Code</button>
-      <button class="export-btn" onclick="exportProject()">💾 Generuj Kod</button>
+      <button class="tab-btn" id="btn-code" onclick="switchTab('code')">🧩 Code</button>
+      
+      <!-- PRZYCISKI PO PRAWEJ STRONIE -->
+      <button class="action-btn export-btn" onclick="exportProject()">💾 Generuj Kod</button>
+      <button class="action-btn template-btn" onclick="generateTemplateZip()">📦 Get Template</button>
     </div>
 
     <!-- ZAKŁADKA 1: DETAILS -->
@@ -243,7 +196,7 @@
     
     <category name="Logika i Kolizje" colour="#5b80a5">
       <block type="controls_if"></block>
-      <block type="logic_negate"></block> <!-- DODANY BLOK ZAPRZECZENIA "NOT" -->
+      <block type="logic_negate"></block>
       <block type="logic_compare"></block>
       <block type="logic_operation"></block>
       <block type="logic_boolean"></block>
@@ -548,7 +501,13 @@
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       const t = document.getElementById('tab-' + tabName);
       if (t) { t.classList.add('active'); }
-      if (event && event.target) { event.target.classList.add('active'); }
+      
+      if (tabName === 'details') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else if (tabName === 'code') {
+        document.getElementById('btn-code').classList.add('active');
+      }
+
       if (tabName === 'code' && workspace) { setTimeout(function() { Blockly.svgResize(workspace); }, 50); }
     }
 
@@ -623,6 +582,42 @@
       } catch (err) {
         document.getElementById('output-main').value = "-- Błąd generowania kodu: " + err.message;
       }
+    }
+
+    // PACZKA ZIP - PRZYCISK "GET TEMPLATE"
+    function generateTemplateZip() {
+      // 1. Upewnij się, że mamy aktualny kod
+      exportProject();
+
+      const manifestContent = document.getElementById('output-manifest').value;
+      const mainContent = document.getElementById('output-main').value;
+      const gameName = document.getElementById('game-name').value || "GraGBA";
+
+      // 2. Przykładowy build.lua
+      const buildLuaContent = `-- Skrypt budujący dla BPCoreEngine
+print("Kompilowanie projektu: " .. "${gameName}")
+os.execute("lua -v")
+`;
+
+      // 3. Budowanie struktury pliku ZIP
+      const zip = new JSZip();
+
+      // Domyślna zawartość pliku build.lua w katalogu głównym
+      zip.file("build.lua", buildLuaContent);
+
+      // Folder "project" z plikami manifest.lua i main.lua
+      const projectFolder = zip.folder("project");
+      projectFolder.file("manifest.lua", manifestContent);
+      projectFolder.file("main.lua", mainContent);
+
+      // 4. Pobieranie pliku
+      zip.generateAsync({ type: "blob" }).then(function(content) {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(content);
+        link.download = gameName + "_Template.zip";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
     }
   </script>
 </body>
