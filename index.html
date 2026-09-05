@@ -4,16 +4,13 @@
   <meta charset="utf-8">
   <title>BlockCore Engine</title>
   
-<!-- Load Blockly core -->
-<script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
-<!-- Load the default blocks -->
-<script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
-<!-- Load a generator -->
-<script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
-<!-- Load a message file -->
-<script src="https://unpkg.com/blockly/msg/en.js"></script>
-
-
+  <!-- Core Blockly -->
+  <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+  
+  <!-- ZMIANA: Załadowanie generatora LUA zamiast JavaScript -->
+  <script src="https://unpkg.com/blockly/lua_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/msg/en.js"></script>
 
   <style>
     body { font-family: sans-serif; background: #1e1e1e; color: #f4f4f4; padding: 20px; }
@@ -35,7 +32,6 @@
   <h1>🎮 GBA Lua Creator</h1>
   
   <div class="tabs-container">
-    <!-- Menu Nawigacji -->
     <div class="tabs-menu">
       <button class="tab-btn active" onclick="switchTab('details')">📝 Details</button>
       <button class="tab-btn" onclick="switchTab('assets')">🖼️ Assets</button>
@@ -86,10 +82,10 @@
     </div>
   </div>
 
-  <!-- ROZBUDOWANA PALETA BLOKÓW (TOOLBOX) -->
+  <!-- TOOLBOX -->
   <xml id="toolbox" style="display: none">
     <category name="Konstrukcja i Start" colour="#655ba5">
-      <block type="gba_start"></block> <!-- NOWY KLOCEK STARTU -->
+      <block type="gba_start"></block>
       <block type="gba_loop"></block>
       <block type="gba_break"></block>
     </category>
@@ -99,7 +95,7 @@
       <block type="logic_compare"></block>
       <block type="logic_operation"></block>
       <block type="logic_boolean"></block>
-      <block type="gba_collision"></block> <!-- NOWY KLOCEK KOLIZJI -->
+      <block type="gba_collision"></block>
     </category>
     
     <category name="Zmienne i Tekst" colour="#a55b80">
@@ -107,7 +103,7 @@
       <block type="variables_set"></block>
       <block type="variables_get"></block>
       <block type="math_number"></block>
-      <block type="text"></block> <!-- KLOCEK DO WPISYWANIA TEKSTU -->
+      <block type="text"></block>
       <block type="math_arithmetic"></block>
     </category>
     
@@ -119,299 +115,250 @@
       <block type="gba_txtr"></block>
       <block type="gba_clear"></block>
       <block type="gba_spr"></block>
-      <block type="gba_print"></block> <!-- NOWY KLOCEK TEKSTU -->
+      <block type="gba_print"></block>
       <block type="gba_display"></block>
     </category>
   </xml>
 
-
-
   <script>
-    // === GLOBALNE ZMIENNE ===
-let workspace;
-let uploadedAssets = [];
+    let workspace;
+    let uploadedAssets = [];
 
-// === REJESTRACJA KLOCKÓW GBA ===
-window.onload = function() {
-  
-  // 1. BEZPIECZNE WYKRYWANIE GENERATORA LUA Z UNPKG
-  const luaGen = (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : 
-                 (window.Lua && window.Lua.luaGenerator) ? window.Lua.luaGenerator : 
-                 (window.Lua) ? window.Lua : Blockly.Lua;
-
-  const forBlock = luaGen ? (luaGen.forBlock ? luaGen.forBlock : luaGen) : null;
-  if (luaGen) { luaGen.INDENT = '    '; }
-
-  // 2. STABILNA DEFINICJA KLOCKÓW PRZEZ JSON (STANDARD UNPKG)
-  Blockly.defineBlocksWithJsonArray([
-    {
-      "type": "gba_loop",
-      "message0": "Pętla Gry (Zawsze) %1 wykonuj: %2",
-      "args0": [{"type": "input_dummy"}, {"type": "input_statement", "name": "DO"}],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 120
-    },
-    {
-      "type": "gba_break",
-      "message0": "wyjdź z pętli gry",
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 120
-    },
-    {
-      "type": "gba_start",
-      "message0": "🏁 Kiedy uruchomiono (Start)",
-      "nextStatement": null,
-      "colour": 65
-    },
-    {
-      "type": "gba_txtr",
-      "message0": "Wczytaj teksturę warstwa: %1 plik .bmp: %2",
-      "args0": [
-        {"type": "input_value", "name": "WARSTWA", "check": "Number"},
-        {"type": "input_value", "name": "PLIK", "check": "String"}
-      ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 20
-    },
-    {
-      "type": "gba_clear",
-      "message0": "Wyczyść ekran kolorem: %1",
-      "args0": [{"type": "input_value", "name": "KOLOR", "check": "Number"}],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 160
-    },
-    {
-      "type": "gba_spr",
-      "message0": "Rysuj sprajta ID: %1 X: %2 Y: %3",
-      "args0": [
-        {"type": "input_value", "name": "ID", "check": "Number"},
-        {"type": "input_value", "name": "X", "check": "Number"},
-        {"type": "input_value", "name": "Y", "check": "Number"}
-      ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 160
-    },
-    {
-      "type": "gba_display",
-      "message0": "Rysuj Klatkę (Display)",
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 160
-    },
-    {
-      "type": "gba_print",
-      "message0": "Narysuj tekst: %1 X: %2 Y: %3",
-      "args0": [
-        {"type": "input_value", "name": "TEKST", "check": "String"},
-        {"type": "input_value", "name": "X", "check": "Number"},
-        {"type": "input_value", "name": "Y", "check": "Number"}
-      ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 160
-    },
-    {
-      "type": "gba_btn",
-      "message0": "przycisk %1",
-      "args0": [{
-        "type": "field_dropdown",
-        "name": "BUTTON",
-        "options": [
-          ["A", "0"], ["B", "1"], ["SELECT", "2"], ["START", "3"],
-          ["PRAWO", "4"], ["LEWO", "5"], ["GÓRA", "6"], ["DÓŁ", "7"],
-          ["R", "8"], ["L", "9"]
-        ]
-      }],
-      "output": "Boolean",
-      "colour": 210
-    },
-    {
-      "type": "gba_collision",
-      "message0": "Kolizja obiektu 1 X: %1 Y: %2 z obiektem 2 X: %3 Y: %4",
-      "args0": [
-        {"type": "input_value", "name": "X1", "check": "Number"},
-        {"type": "input_value", "name": "Y1", "check": "Number"},
-        {"type": "input_value", "name": "X2", "check": "Number"},
-        {"type": "input_value", "name": "Y2", "check": "Number"}
-      ],
-      "inputsInline": true,
-      "output": "Boolean",
-      "colour": 210
-    }
-  ]);
-
-  // 3. TRANSLATORY LUA DLA KLOCKÓW (BEZPZPIECZNE PRZYPISANIE)
-  if (forBlock) {
-    forBlock['gba_loop'] = function(block) {
-      return 'while true do\n' + luaGen.statementToCode(block, 'DO') + 'end\n';
-    };
-    forBlock['gba_break'] = function(block) { return 'break\n'; };
-    forBlock['gba_start'] = function(block) { return ''; };
-    forBlock['gba_display'] = function(block) { return 'display()\n'; };
-    
-    forBlock['gba_clear'] = function(block) {
-      const k = luaGen.valueToCode(block, 'KOLOR', 99) || '0';
-      return 'clear(' + k + ')\n';
-    };
-    forBlock['gba_txtr'] = function(block) {
-      const w = luaGen.valueToCode(block, 'WARSTWA', 99) || '4';
-      let p = luaGen.valueToCode(block, 'PLIK', 99);
-      if (!p) { p = uploadedAssets.length > 0 ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"'; }
-      return 'txtr(' + w + ', ' + p + ')\n';
-    };
-    forBlock['gba_spr'] = function(block) {
-      const id = luaGen.valueToCode(block, 'ID', 99) || '0';
-      const x = luaGen.valueToCode(block, 'X', 99) || '0';
-      const y = luaGen.valueToCode(block, 'Y', 99) || '0';
-      return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
-    };
-    forBlock['gba_print'] = function(block) {
-      const t = luaGen.valueToCode(block, 'TEKST', 99) || '" "';
-      const x = luaGen.valueToCode(block, 'X', 99) || '0';
-      const y = luaGen.valueToCode(block, 'Y', 99) || '0';
-      return 'print(' + t + ', ' + x + ', ' + y + ')\n';
-    };
-    forBlock['gba_btn'] = function(block) {
-      return ['btn(' + block.getFieldValue('BUTTON') + ')', 99];
-    };
-    forBlock['gba_collision'] = function(block) {
-      const x1 = luaGen.valueToCode(block, 'X1', 99) || '0';
-      const y1 = luaGen.valueToCode(block, 'Y1', 99) || '0';
-      const x2 = luaGen.valueToCode(block, 'X2', 99) || '0';
-      const y2 = luaGen.valueToCode(block, 'Y2', 99) || '0';
-      const f = x1 + ' < ' + x2 + ' + 16 and ' + x1 + ' + 16 > ' + x2 + ' and ' + y1 + ' < ' + y2 + ' + 16 and ' + y1 + ' + 16 > ' + y2;
-      return [f, 99];
-    };
-  }
-
-  // 4. INICJALIZACJA WORKSPACE
-  workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox') });
-
-  if (workspace && workspace.registerButtonCallback) {
-    workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
-      Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
-    });
-  }
-
-  setTimeout(function() { if (workspace) { Blockly.svgResize(workspace); } }, 100);
-};
-
-// === NAWIGACJA ===
-function switchTab(tabName) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  const t = document.getElementById('tab-' + tabName);
-  if (t) { t.classList.add('active'); }
-  if (event && event.target) { event.target.classList.add('active'); }
-  if (tabName === 'code' && workspace) { setTimeout(function() { Blockly.svgResize(workspace); }, 50); }
-}
-
-// === ASSETY ===
-function addAsset() {
-  const fileInput = document.getElementById('asset-upload');
-  if (!fileInput || fileInput.files.length === 0) return;
-  const name = fileInput.files[0].name;
-  if (!uploadedAssets.includes(name)) {
-    uploadedAssets.push(name);
-    const li = document.createElement('li');
-    li.style = "background:#333; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between;";
-    li.innerHTML = `<span>🖼️ ${name}</span> <button onclick="this.parentElement.remove(); uploadedAssets=uploadedAssets.filter(i=>i!='${name}');" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Usuń</button>`;
-    document.getElementById('asset-list').appendChild(li);
-  }
-  fileInput.value = "";
-}
-// === GENEROWANIE I EKSPORT PLIKÓW (WERSJA Z INICJALIZACJĄ GENERATORA) ===
-function exportProject() {
-  const n = document.getElementById('game-name').value || "GraGBA";
-  const k = document.getElementById('game-code').value || "AGBA";
-  const a = document.getElementById('game-author').value || "Anonim";
-  
-  // 1. ZBIERANIE ASSETÓW Z KLOCKÓW DLA PLIKU MANIFESTU
-  let dynamicAssets = [...uploadedAssets];
-  if (workspace) {
-    const allBlocks = workspace.getAllBlocks(false);
-    allBlocks.forEach(block => {
-      if (block.type === 'gba_txtr') {
-        const fileBlock = block.getInputTargetBlock('PLIK');
-        if (fileBlock && fileBlock.type === 'text') {
-          const val = fileBlock.getFieldValue('TEXT');
-          if (val && !dynamicAssets.includes(val)) {
-            dynamicAssets.push(val);
-          }
+    window.onload = function() {
+      // 1. Definicja bloków JSON
+      Blockly.defineBlocksWithJsonArray([
+        {
+          "type": "gba_loop",
+          "message0": "Pętla Gry (Zawsze) %1 wykonuj: %2",
+          "args0": [{"type": "input_dummy"}, {"type": "input_statement", "name": "DO"}],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120
+        },
+        {
+          "type": "gba_break",
+          "message0": "wyjdź z pętli gry",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120
+        },
+        {
+          "type": "gba_start",
+          "message0": "🏁 Kiedy uruchomiono (Start)",
+          "nextStatement": null,
+          "colour": 65
+        },
+        {
+          "type": "gba_txtr",
+          "message0": "Wczytaj teksturę warstwa: %1 plik .bmp: %2",
+          "args0": [
+            {"type": "input_value", "name": "WARSTWA", "check": "Number"},
+            {"type": "input_value", "name": "PLIK", "check": "String"}
+          ],
+          "inputsInline": true,
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 20
+        },
+        {
+          "type": "gba_clear",
+          "message0": "Wyczyść ekran kolorem: %1",
+          "args0": [{"type": "input_value", "name": "KOLOR", "check": "Number"}],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "gba_spr",
+          "message0": "Rysuj sprajta ID: %1 X: %2 Y: %3",
+          "args0": [
+            {"type": "input_value", "name": "ID", "check": "Number"},
+            {"type": "input_value", "name": "X", "check": "Number"},
+            {"type": "input_value", "name": "Y", "check": "Number"}
+          ],
+          "inputsInline": true,
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "gba_display",
+          "message0": "Rysuj Klatkę (Display)",
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "gba_print",
+          "message0": "Narysuj tekst: %1 X: %2 Y: %3",
+          "args0": [
+            {"type": "input_value", "name": "TEKST", "check": "String"},
+            {"type": "input_value", "name": "X", "check": "Number"},
+            {"type": "input_value", "name": "Y", "check": "Number"}
+          ],
+          "inputsInline": true,
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
+          "type": "gba_btn",
+          "message0": "przycisk %1",
+          "args0": [{
+            "type": "field_dropdown",
+            "name": "BUTTON",
+            "options": [
+              ["A", "0"], ["B", "1"], ["SELECT", "2"], ["START", "3"],
+              ["PRAWO", "4"], ["LEWO", "5"], ["GÓRA", "6"], ["DÓŁ", "7"],
+              ["R", "8"], ["L", "9"]
+            ]
+          }],
+          "output": "Boolean",
+          "colour": 210
+        },
+        {
+          "type": "gba_collision",
+          "message0": "Kolizja obiektu 1 X: %1 Y: %2 z obiektem 2 X: %3 Y: %4",
+          "args0": [
+            {"type": "input_value", "name": "X1", "check": "Number"},
+            {"type": "input_value", "name": "Y1", "check": "Number"},
+            {"type": "input_value", "name": "X2", "check": "Number"},
+            {"type": "input_value", "name": "Y2", "check": "Number"}
+          ],
+          "inputsInline": true,
+          "output": "Boolean",
+          "colour": 210
         }
-      }
-    });
-  }
+      ]);
 
-  // 2. BUDOWANIE PLIKU MANIFEST.LUA
-  let manifestText = "-- Wygenerowano dla BPCore\n";
-  manifestText += "local app = {\n";
-  manifestText += '    name = "' + n + '",\n';
-  manifestText += '    gamecode = "' + k + '",\n';
-  manifestText += "    spritesheets = {\n";
-  dynamicAssets.forEach(asset => { 
-    manifestText += '        "' + asset + '",\n'; 
-  });
-  manifestText += "    },\n";
-  manifestText += '    scripts = { "main.lua" }\n';
-  manifestText += "}\nreturn app";
-  
-  // Wrzucenie manifestu do lewego okienka
-  document.getElementById('output-manifest').value = manifestText;
+      // 2. Przypisanie generatorów kodu Lua
+      const lua = Blockly.Lua;
+      lua.INDENT = '    ';
 
-  // 3. GENEROWANIE KODU MAIN.LUA
-  let mainLuaText = "";
-  
-  try {
-    // Odnajdujemy poprawny obiekt generatora dostarczony przez unpkg
-    const gen = (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : 
-                 (window.Lua && window.Lua.luaGenerator) ? window.Lua.luaGenerator : 
-                 (window.Lua) ? window.Lua : Blockly.Lua;
-    
-    if (workspace && gen) {
-      // WAŻNE DLA UNPKG: Konfiguracja formatu wcięć dla wybranego generatora
-      gen.INDENT = '    ';
+      lua.forBlock['gba_loop'] = function(block) {
+        return 'while true do\n' + lua.statementToCode(block, 'DO') + 'end\n';
+      };
+      lua.forBlock['gba_break'] = function(block) { return 'break\n'; };
+      lua.forBlock['gba_start'] = function(block) { return ''; };
+      lua.forBlock['gba_display'] = function(block) { return 'display()\n'; };
       
-      // WYMUSZENIE INICJALIZACJI: Łączymy definicje klocków z naszym obszarem roboczym
-      if (typeof gen.init === "function") {
-        gen.init(workspace);
-      }
+      lua.forBlock['gba_clear'] = function(block) {
+        const k = lua.valueToCode(block, 'KOLOR', lua.ORDER_ATOMIC) || '0';
+        return 'clear(' + k + ')\n';
+      };
+      lua.forBlock['gba_txtr'] = function(block) {
+        const w = lua.valueToCode(block, 'WARSTWA', lua.ORDER_ATOMIC) || '4';
+        let p = lua.valueToCode(block, 'PLIK', lua.ORDER_ATOMIC);
+        if (!p) { p = uploadedAssets.length > 0 ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"'; }
+        return 'txtr(' + w + ', ' + p + ')\n';
+      };
+      lua.forBlock['gba_spr'] = function(block) {
+        const id = lua.valueToCode(block, 'ID', lua.ORDER_ATOMIC) || '0';
+        const x = lua.valueToCode(block, 'X', lua.ORDER_ATOMIC) || '0';
+        const y = lua.valueToCode(block, 'Y', lua.ORDER_ATOMIC) || '0';
+        return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
+      };
+      lua.forBlock['gba_print'] = function(block) {
+        const t = lua.valueToCode(block, 'TEKST', lua.ORDER_ATOMIC) || '" "';
+        const x = lua.valueToCode(block, 'X', lua.ORDER_ATOMIC) || '0';
+        const y = lua.valueToCode(block, 'Y', lua.ORDER_ATOMIC) || '0';
+        return 'print(' + t + ', ' + x + ', ' + y + ')\n';
+      };
+      lua.forBlock['gba_btn'] = function(block) {
+        return ['btn(' + block.getFieldValue('BUTTON') + ')', lua.ORDER_ATOMIC];
+      };
+      lua.forBlock['gba_collision'] = function(block) {
+        const x1 = lua.valueToCode(block, 'X1', lua.ORDER_ATOMIC) || '0';
+        const y1 = lua.valueToCode(block, 'Y1', lua.ORDER_ATOMIC) || '0';
+        const x2 = lua.valueToCode(block, 'X2', lua.ORDER_ATOMIC) || '0';
+        const y2 = lua.valueToCode(block, 'Y2', lua.ORDER_ATOMIC) || '0';
+        const f = x1 + ' < ' + x2 + ' + 16 and ' + x1 + ' + 16 > ' + x2 + ' and ' + y1 + ' < ' + y2 + ' + 16 and ' + y1 + ' + 16 > ' + y2;
+        return [f, lua.ORDER_ATOMIC];
+      };
 
-      // Generowanie kodu ze wszystkich ułożonych klocków
-      if (typeof gen.workspaceToCode === "function") {
-        mainLuaText = gen.workspaceToCode(workspace);
-      } 
-      // Rezerwowe wywołanie dla natywnego rdzenia Blockly
-      else if (Blockly.Lua && typeof Blockly.Lua.workspaceToCode === "function") {
-        Blockly.Lua.INDENT = '    ';
-        mainLuaText = Blockly.Lua.workspaceToCode(workspace);
-      }
-    } else {
-      mainLuaText = "-- Błąd: Nie odnaleziono generatora języka Lua.";
+      // 3. Inicjalizacja obszaru roboczego
+      workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox') });
+
+      workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
+        Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
+      });
+
+      setTimeout(function() { Blockly.svgResize(workspace); }, 100);
+    };
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      const t = document.getElementById('tab-' + tabName);
+      if (t) { t.classList.add('active'); }
+      if (event && event.target) { event.target.classList.add('active'); }
+      if (tabName === 'code' && workspace) { setTimeout(function() { Blockly.svgResize(workspace); }, 50); }
     }
-  } catch (err) {
-    // Jeśli skrypt napotka problem, wyświetli jego opis w prawym oknie
-    mainLuaText = "-- Błąd krytyczny generatora: " + err.message + "\n";
-  }
 
-  // Jeśli kod wyszedł pusty lub zawiera tylko białe znaki
-  if (!mainLuaText || mainLuaText.trim() === "") {
-    mainLuaText = "-- Układaj bloki w pętli gry, aby wygenerować kod main.lua\n";
-    mainLuaText += "-- (Upewnij się, że klocki są ze sobą prawidłowo połączone!)";
-  }
+    function addAsset() {
+      const fileInput = document.getElementById('asset-upload');
+      if (!fileInput || fileInput.files.length === 0) return;
+      const name = fileInput.files[0].name;
+      if (!uploadedAssets.includes(name)) {
+        uploadedAssets.push(name);
+        const li = document.createElement('li');
+        li.style = "background:#333; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between;";
+        li.innerHTML = `<span>🖼️ ${name}</span> <button onclick="this.parentElement.remove(); uploadedAssets=uploadedAssets.filter(i=>i!='${name}');" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Usuń</button>`;
+        document.getElementById('asset-list').appendChild(li);
+      }
+      fileInput.value = "";
+    }
 
-  // Wrzucenie gotowego kodu Lua do prawego okienka
-  document.getElementById('output-main').value = mainLuaText;
-}
+    function exportProject() {
+      const n = document.getElementById('game-name').value || "GraGBA";
+      const k = document.getElementById('game-code').value || "AGBA";
+      const a = document.getElementById('game-author').value || "Anonim";
+      
+      let dynamicAssets = [...uploadedAssets];
+      if (workspace) {
+        const allBlocks = workspace.getAllBlocks(false);
+        allBlocks.forEach(block => {
+          if (block.type === 'gba_txtr') {
+            const fileBlock = block.getInputTargetBlock('PLIK');
+            if (fileBlock && fileBlock.type === 'text') {
+              const val = fileBlock.getFieldValue('TEXT');
+              if (val && !dynamicAssets.includes(val)) {
+                dynamicAssets.push(val);
+              }
+            }
+          }
+        });
+      }
 
+      // Manifest
+      let manifestText = "-- Wygenerowano dla BPCore\n";
+      manifestText += "local app = {\n";
+      manifestText += '    name = "' + n + '",\n';
+      manifestText += '    gamecode = "' + k + '",\n';
+      manifestText += "    spritesheets = {\n";
+      dynamicAssets.forEach(asset => { 
+        manifestText += '        "' + asset + '",\n'; 
+      });
+      manifestText += "    },\n";
+      manifestText += '    scripts = { "main.lua" }\n';
+      manifestText += "}\nreturn app";
+      
+      document.getElementById('output-manifest').value = manifestText;
+
+      // Generowanie kodu Lua
+      try {
+        let mainLuaText = Blockly.Lua.workspaceToCode(workspace);
+        
+        if (!mainLuaText || mainLuaText.trim() === "") {
+          mainLuaText = "-- Układaj bloki w pętli gry, aby wygenerować kod main.lua\n";
+          mainLuaText += "-- (Upewnij się, że klocki są ze sobą prawidłowo połączone!)";
+        }
+        
+        document.getElementById('output-main').value = mainLuaText;
+      } catch (err) {
+        document.getElementById('output-main').value = "-- Błąd generowania kodu: " + err.message;
+      }
+    }
   </script>
 </body>
 </html>
