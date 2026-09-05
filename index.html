@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
   
-  <!-- Załadowanie generatora LUA -->
+  <!-- Generator LUA -->
   <script src="https://unpkg.com/blockly/lua_compressed.js"></script>
   <script src="https://unpkg.com/blockly/msg/en.js"></script>
 
@@ -105,12 +105,10 @@
     /* MODYFIKACJE CZARNEGO TRYBU DLA GOOGLE BLOCKLY           */
     /* ======================================================== */
 
-    /* Kolor siatki/kropek w tle ciemnego pola roboczego */
     .blocklyGridPattern line {
       stroke: #333333 !important;
     }
 
-    /* Wygląd etykiet tekstowych klocków */
     .blocklyText,
     text.blocklyText,
     .blocklyFlyoutLabelText {
@@ -130,7 +128,6 @@
       border-radius: 4px !important;
     }
 
-    /* CZARNY TEKST W OPCJACH POPUP MENU */
     .goog-menuitem,
     .goog-menuitem-content,
     .goog-menuitem span,
@@ -154,11 +151,7 @@
       color: #ffffff !important;
     }
 
-    /* ======================================================== */
-    /* NAPRAWA POL INPUT / DROPDOWN / NUMBER NA KLOCKACH        */
-    /* ======================================================== */
-
-    /* Czarny tekst w drop listach, polach edycyjnych tekstowych oraz liczbowych */
+    /* POLA INPUT / DROPDOWN / NUMBER NA KLOCKACH */
     .blocklyFieldDropdown text,
     .blocklyFieldVariable text,
     .blocklyFieldTextInput text,
@@ -170,7 +163,6 @@
       font-weight: 600 !important;
     }
 
-    /* Jasne tło prostokątów wewnątrz klocków (pola edycji i listy) */
     .blocklyEditableText > rect,
     .blocklyFieldDropdown > rect,
     .blocklyFieldVariable > rect,
@@ -180,12 +172,10 @@
       fill-opacity: 0.9 !important;
     }
 
-    /* Strzałki w rozwijanych listach na czarno */
     .blocklyDropdownTriangle {
       fill: #000000 !important;
     }
 
-    /* Pole edycji aktywnej (wpisywanie z klawiatury) */
     .blocklyHtmlInput {
       background-color: #f0f0f0 !important;
       color: #000000 !important;
@@ -255,9 +245,10 @@
 
   <!-- TOOLBOX -->
   <xml id="toolbox" style="display: none">
-    <category name="Konstrukcja i Start" colour="#655ba5">
+    <category name="Konstrukcja i Czas" colour="#655ba5">
       <block type="gba_start"></block>
       <block type="gba_loop"></block>
+      <block type="gba_wait_ms"></block>
       <block type="gba_break"></block>
     </category>
     
@@ -269,23 +260,30 @@
       <block type="gba_collision"></block>
     </category>
     
-    <category name="Zmienne i Tekst" colour="#a55b80">
+    <category name="Zmienne i Matematyka" colour="#a55b80">
       <button text="Stwórz zmienną..." callbackKey="CREATE_VARIABLE"></button>
       <block type="variables_set"></block>
       <block type="variables_get"></block>
       <block type="math_number"></block>
       <block type="text"></block>
       <block type="math_arithmetic"></block>
+      <block type="math_random_int"></block>
     </category>
     
     <category name="GBA Sterowanie" colour="#995ba5">
       <block type="gba_btn"></block>
+      <block type="gba_btn_pressed"></block>
+    </category>
+
+    <category name="GBA Dźwięk" colour="#e67e22">
+      <block type="gba_sound"></block>
     </category>
     
     <category name="GBA Grafika" colour="#5ba55b">
       <block type="gba_txtr"></block>
       <block type="gba_clear"></block>
       <block type="gba_spr"></block>
+      <block type="gba_scroll"></block>
       <block type="gba_print"></block>
       <block type="gba_display"></block>
     </category>
@@ -305,6 +303,14 @@
           "previousStatement": null,
           "nextStatement": null,
           "colour": 120
+        },
+        {
+          "type": "gba_wait_ms",
+          "message0": "czekaj %1 ms (nieblokująco)",
+          "args0": [{"type": "input_value", "name": "TIME", "check": "Number"}],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 65
         },
         {
           "type": "gba_break",
@@ -353,6 +359,18 @@
           "colour": 160
         },
         {
+          "type": "gba_scroll",
+          "message0": "Ustaw kamerę X: %1 Y: %2",
+          "args0": [
+            {"type": "input_value", "name": "X", "check": "Number"},
+            {"type": "input_value", "name": "Y", "check": "Number"}
+          ],
+          "inputsInline": true,
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 160
+        },
+        {
           "type": "gba_display",
           "message0": "Rysuj Klatkę (Display)",
           "previousStatement": null,
@@ -373,8 +391,31 @@
           "colour": 160
         },
         {
+          "type": "gba_sound",
+          "message0": "Odtwórz dźwięk ID: %1",
+          "args0": [{"type": "input_value", "name": "SFX_ID", "check": "Number"}],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 30
+        },
+        {
           "type": "gba_btn",
-          "message0": "przycisk %1",
+          "message0": "przycisk %1 wciśnięty",
+          "args0": [{
+            "type": "field_dropdown",
+            "name": "BUTTON",
+            "options": [
+              ["A", "0"], ["B", "1"], ["SELECT", "2"], ["START", "3"],
+              ["PRAWO", "4"], ["LEWO", "5"], ["GÓRA", "6"], ["DÓŁ", "7"],
+              ["R", "8"], ["L", "9"]
+            ]
+          }],
+          "output": "Boolean",
+          "colour": 210
+        },
+        {
+          "type": "gba_btn_pressed",
+          "message0": "przycisk %1 kliknięty (raz)",
           "args0": [{
             "type": "field_dropdown",
             "name": "BUTTON",
@@ -399,6 +440,17 @@
           "inputsInline": true,
           "output": "Boolean",
           "colour": 210
+        },
+        {
+          "type": "math_random_int",
+          "message0": "losowa liczba od %1 do %2",
+          "args0": [
+            {"type": "input_value", "name": "FROM", "check": "Number"},
+            {"type": "input_value", "name": "TO", "check": "Number"}
+          ],
+          "inputsInline": true,
+          "output": "Number",
+          "colour": 230
         }
       ]);
 
@@ -407,8 +459,22 @@
       lua.INDENT = '    ';
 
       lua.forBlock['gba_loop'] = function(block) {
-        return 'while true do\n' + lua.statementToCode(block, 'DO') + 'end\n';
+        return 'while true do\n' +
+               '    -- Aktualizacja timera w klatce (1 klatka ~= 16.6 ms)\n' +
+               '    if _timer_ms > 0 then _timer_ms = _timer_ms - 16 end\n' +
+               lua.statementToCode(block, 'DO') + 
+               'end\n';
       };
+
+      lua.forBlock['gba_wait_ms'] = function(block) {
+        const ms = lua.valueToCode(block, 'TIME', lua.ORDER_ATOMIC) || '1000';
+        return '_timer_ms = ' + ms + '\n' +
+               'while _timer_ms > 0 do\n' +
+               '    _timer_ms = _timer_ms - 16\n' +
+               '    display()\n' +
+               'end\n';
+      };
+
       lua.forBlock['gba_break'] = function(block) { return 'break\n'; };
       lua.forBlock['gba_start'] = function(block) { return ''; };
       lua.forBlock['gba_display'] = function(block) { return 'display()\n'; };
@@ -429,14 +495,26 @@
         const y = lua.valueToCode(block, 'Y', lua.ORDER_ATOMIC) || '0';
         return 'spr(' + id + ', ' + x + ', ' + y + ')\n';
       };
+      lua.forBlock['gba_scroll'] = function(block) {
+        const x = lua.valueToCode(block, 'X', lua.ORDER_ATOMIC) || '0';
+        const y = lua.valueToCode(block, 'Y', lua.ORDER_ATOMIC) || '0';
+        return 'scroll(' + x + ', ' + y + ')\n';
+      };
       lua.forBlock['gba_print'] = function(block) {
         const t = lua.valueToCode(block, 'TEKST', lua.ORDER_ATOMIC) || '" "';
         const x = lua.valueToCode(block, 'X', lua.ORDER_ATOMIC) || '0';
         const y = lua.valueToCode(block, 'Y', lua.ORDER_ATOMIC) || '0';
         return 'print(' + t + ', ' + x + ', ' + y + ')\n';
       };
+      lua.forBlock['gba_sound'] = function(block) {
+        const id = lua.valueToCode(block, 'SFX_ID', lua.ORDER_ATOMIC) || '0';
+        return 'sfx(' + id + ')\n';
+      };
       lua.forBlock['gba_btn'] = function(block) {
         return ['btn(' + block.getFieldValue('BUTTON') + ')', lua.ORDER_ATOMIC];
+      };
+      lua.forBlock['gba_btn_pressed'] = function(block) {
+        return ['btnp(' + block.getFieldValue('BUTTON') + ')', lua.ORDER_ATOMIC];
       };
       lua.forBlock['gba_collision'] = function(block) {
         const x1 = lua.valueToCode(block, 'X1', lua.ORDER_ATOMIC) || '0';
@@ -445,6 +523,11 @@
         const y2 = lua.valueToCode(block, 'Y2', lua.ORDER_ATOMIC) || '0';
         const f = x1 + ' < ' + x2 + ' + 16 and ' + x1 + ' + 16 > ' + x2 + ' and ' + y1 + ' < ' + y2 + ' + 16 and ' + y1 + ' + 16 > ' + y2;
         return [f, lua.ORDER_ATOMIC];
+      };
+      lua.forBlock['math_random_int'] = function(block) {
+        const from = lua.valueToCode(block, 'FROM', lua.ORDER_ATOMIC) || '1';
+        const to = lua.valueToCode(block, 'TO', lua.ORDER_ATOMIC) || '10';
+        return ['math.random(' + from + ', ' + to + ')', lua.ORDER_ATOMIC];
       };
 
       // INICJALIZACJA OBSZARU ROBOCZEGO
@@ -462,7 +545,6 @@
         })
       });
 
-      // Rejestracja przycisku "Stwórz zmienną..."
       if (workspace && workspace.registerButtonCallback) {
         workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
           Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
@@ -519,7 +601,7 @@
       }
 
       // Manifest
-      let manifestText = "-- Wygenerowano dla BPCore\n";
+      let manifestText = "-- Wygenerowano dla BPCore Engine\n";
       manifestText += "local app = {\n";
       manifestText += '    name = "' + n + '",\n';
       manifestText += '    gamecode = "' + k + '",\n';
@@ -535,11 +617,13 @@
 
       // Generowanie kodu Lua
       try {
-        let mainLuaText = Blockly.Lua.workspaceToCode(workspace);
+        let generatedLua = Blockly.Lua.workspaceToCode(workspace);
+        let mainLuaText = "-- Inicjalizacja systemowej zmiennej timera\n";
+        mainLuaText += "local _timer_ms = 0\n\n";
+        mainLuaText += generatedLua;
         
-        if (!mainLuaText || mainLuaText.trim() === "") {
-          mainLuaText = "-- Układaj bloki w pętli gry, aby wygenerować kod main.lua\n";
-          mainLuaText += "-- (Upewnij się, że klocki są ze sobą prawidłowo połączone!)";
+        if (!generatedLua || generatedLua.trim() === "") {
+          mainLuaText += "-- Układaj bloki w pętli gry, aby wygenerować kod main.lua\n";
         }
         
         document.getElementById('output-main').value = mainLuaText;
