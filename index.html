@@ -12,7 +12,7 @@
   <script src="https://unpkg.com/blockly/lua_compressed.js"></script>
   <script src="https://unpkg.com/blockly/msg/en.js"></script>
 
-  <!-- Biblioteka JSZip do generowania archiwów ZIP w przeglądarce -->
+  <!-- Biblioteka JSZip -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
@@ -543,27 +543,34 @@
         });
       }
 
-      // Manifest
+      // Manifest dopasowany dokładnie do struktury BPCoreEngine
       let manifestText = "-- Wygenerowano dla BPCore Engine\n";
-      manifestText += "local app = {\n";
+      manifestText += "return {\n";
       manifestText += '    name = "' + n + '",\n';
-      manifestText += '    gamecode = "' + k + '",\n';
       manifestText += '    author = "' + a + '",\n';
+      manifestText += '    version = "1.0",\n';
+      manifestText += '    gamecode = "' + k + '",\n\n';
       
+      // Spritesheets
       manifestText += "    spritesheets = {\n";
       detectedSpritesheets.forEach(asset => { 
         manifestText += '        "' + asset + '",\n'; 
       });
       manifestText += "    },\n";
 
-      manifestText += "    sounds = {\n";
+      // Puste tabele wymagane przez build.lua
+      manifestText += "    tilesets = {},\n";
+
+      // Audio (wcześniej sounds)
+      manifestText += "    audio = {\n";
       detectedSounds.forEach(sound => { 
         manifestText += '        "' + sound + '",\n'; 
       });
       manifestText += "    },\n";
 
-      manifestText += '    scripts = { "main.lua" }\n';
-      manifestText += "}\nreturn app";
+      manifestText += "    misc = {},\n";
+      manifestText += '    scripts = {\n        "main.lua"\n    }\n';
+      manifestText += "}\n";
       
       document.getElementById('output-manifest').value = manifestText;
 
@@ -586,31 +593,19 @@
 
     // PACZKA ZIP - PRZYCISK "GET TEMPLATE"
     function generateTemplateZip() {
-      // 1. Upewnij się, że mamy aktualny kod
       exportProject();
 
       const manifestContent = document.getElementById('output-manifest').value;
       const mainContent = document.getElementById('output-main').value;
       const gameName = document.getElementById('game-name').value || "GraGBA";
 
-      // 2. Przykładowy build.lua
-      const buildLuaContent = `-- Skrypt budujący dla BPCoreEngine
-print("Kompilowanie projektu: " .. "${gameName}")
-os.execute("lua -v")
-`;
-
-      // 3. Budowanie struktury pliku ZIP
       const zip = new JSZip();
 
-      // Domyślna zawartość pliku build.lua w katalogu głównym
-      zip.file("build.lua", buildLuaContent);
-
-      // Folder "project" z plikami manifest.lua i main.lua
+      // Utworzenie katalogu "project" z plikami manifest.lua i main.lua
       const projectFolder = zip.folder("project");
       projectFolder.file("manifest.lua", manifestContent);
       projectFolder.file("main.lua", mainContent);
 
-      // 4. Pobieranie pliku
       zip.generateAsync({ type: "blob" }).then(function(content) {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(content);
