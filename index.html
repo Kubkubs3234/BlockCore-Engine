@@ -114,7 +114,7 @@
     /* NAPRAWA CZCIONEK NA KLOCKACH ORAZ W MENU ROZWIJANYCH     */
     /* ======================================================== */
     
-    /* 1. Wymuszenie jasnego/białego tekstu na wszystkich klockach */
+    /* 1. Wymuszenie jasnego/białego tekstu dla zwykłych etykiet klocków */
     .blocklyText,
     text.blocklyText,
     .blocklyFlyoutLabelText {
@@ -122,7 +122,7 @@
       font-family: 'Segoe UI', sans-serif !important;
     }
 
-    /* 2. MENU ROZWIJANE (DROP DOWN) - JASNOSZARE TŁO I CZARNY TEKST */
+    /* 2. MENU ROZWIJANE (DROP DOWN) - JASNOSZARE TŁO I CZARNY TEKST W ROZWINIĘTYM MENU */
     .blocklyDropdownMenu,
     .blocklyDropdownMenuDiv,
     div.blocklyDropdownMenuDiv,
@@ -134,7 +134,7 @@
       border-radius: 4px !important;
     }
 
-    /* CZARNY TEKST W OPJACH MENU */
+    /* CZARNY TEKST W OPCJACH MENU */
     .goog-menuitem,
     .goog-menuitem-content,
     .goog-menuitem span,
@@ -159,15 +159,20 @@
       color: #ffffff !important;
     }
 
-    /* Styl tekstu wewnątrz pól wyboru bezpośrednio na klockach */
+    /* 3. ZMIANA NA CZARNY TEKST DLA POL DROPDOWN NA SAMYCH KLOCKACH */
     .blocklyFieldDropdown text,
-    .blocklyEditableText text,
-    g.blocklyEditableText text,
-    g.blocklyFieldDropdown text {
-      fill: #ffffff !important;
+    g.blocklyFieldDropdown text,
+    .blocklyDropdownText {
+      fill: #000000 !important;
+      font-weight: 600 !important;
     }
 
-    /* 3. POLA EDYCJI W BLOCKLY (WPISYWANIE WARTOŚCI TEKSTOWYCH I LICZB) */
+    /* MAŁE STRZAŁKI W POLACH WYBORU NA CZARNO */
+    .blocklyDropdownTriangle {
+      fill: #000000 !important;
+    }
+
+    /* 4. POLA EDYCJI W BLOCKLY (WPISYWANIE WARTOŚCI TEKSTOWYCH I LICZB) */
     .blocklyHtmlInput {
       background-color: #f0f0f0 !important;
       color: #000000 !important;
@@ -175,11 +180,6 @@
       font-family: sans-serif !important;
       font-weight: bold !important;
       border-radius: 2px !important;
-    }
-
-    /* Zmiana koloru małych strzałek dropdownów na klockach na białe */
-    .blocklyDropdownTriangle {
-      fill: #ffffff !important;
     }
   </style>
 
