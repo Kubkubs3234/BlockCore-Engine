@@ -108,98 +108,59 @@
       border-radius: 4px; 
     }
 
-       /* ======================================================== */
+    /* ======================================================== */
     /* DESIGN MODYFIKACJI CZARNEGO TRYBU DLA GOOGLE BLOCKLY     */
     /* ======================================================== */
 
-    /* 1. CAŁKOWICIE CZARNY PASEK KATEGORII (TOOLBOX - NAPRAWA JASNEGO TŁA) */
-    .blocklyToolboxDiv, 
-    div.blocklyToolboxDiv,
-    .blocklyToolboxBackground {
-      background-color: #111111 !important;
-      border-right: 1px solid #2d2d2d !important;
-      color: #e0e0e0 !important;
-    }
-
-    /* Jasne i bardzo czytelne napisy kategorii na czarnym pasku */
-    .blocklyTreeLabel,
-    span.blocklyTreeLabel,
-    .blocklyTreeRow span {
-      color: #e0e0e0 !important;
-      font-family: 'Segoe UI', sans-serif !important;
-      font-size: 13px !important;
-    }
-
-    /* Wygląd wiersza kategorii (usuwamy domyślne białawe tła) */
-    .blocklyTreeRow {
-      background: transparent !important;
-      border: none !important;
-    }
-
-    /* Podświetlenie aktywnej/klikniętej kategorii w menu */
-    .blocklyTreeRow.blocklyTreeSelected,
-    div.blocklyTreeRow.blocklyTreeSelected {
-      background-color: #007acc !important;
-    }
-    .blocklyTreeRow.blocklyTreeSelected .blocklyTreeLabel {
-      color: #ffffff !important;
-      font-weight: bold !important;
-    }
-
-    /* 2. PASKA Z KLOCKAMI (FLYOUT) - ZOSTAJE CZARNY */
-    path.blocklyFlyoutBackground,
-    .blocklyFlyoutBackground {
-      fill: #1a1a1a !important;
-      fill-opacity: 0.98 !important;
-      stroke: #2d2d2d !important;
-    }
-
-    /* 3. DOCIEMNIONE POLE ROBOCZE (WORKSPACE) */
-    .blocklyMainBackground {
-      stroke: none !important;
-      fill: #252526 !important;
-    }
+    /* Kolor siatki/kropek w tle ciemnego pola roboczego */
     .blocklyGridPattern line {
       stroke: #333333 !important;
     }
 
     /* ======================================================== */
-    /* 4. NAPRAWA NAPISÓW NA KLOCKACH (A, ITEM, CYFRY, DROPDOWN)*/
+    /* NAPRAWA CZCIONEK NA KLOCKACH (A, ITEM, CYFRY)            */
     /* ======================================================== */
     
-    /* Wymuszenie jasnego/białego tekstu na samych klockach i ich polach */
+    /* 1. Wymuszenie jasnego/białego tekstu na wszystkich klockach */
     .blocklyText,
     text.blocklyText,
     .blocklyFlyoutLabelText {
       fill: #ffffff !important;
-      font-family: sans-serif !important;
+      font-family: 'Segoe UI', sans-serif !important;
     }
 
-    /* Ciemne tło dla rozwijanych list na klockach (np. wybór przycisku A, B, item) */
+    /* 2. NAPRAWA LIST ROZWIJANYCH (Dropdown np. przycisk A, B, item) */
+    /* Wymuszamy, aby napisy opcji wewnątrz klocka były zawsze białe */
+    .blocklyFieldDropdown text,
+    .blocklyEditableText text,
+    g.blocklyEditableText text,
+    g.blocklyFieldDropdown text {
+      fill: #ffffff !important;   /* Zmienia czarne napisy na klockach na białe */
+      color: #ffffff !important;
+    }
+
+    /* Ciemne tło dla menu, które wyskakuje po kliknięciu np. listy przycisków */
     .blocklyDropdownMenu,
-    .blocklyDropdownMenuDiv {
+    .blocklyDropdownMenuDiv,
+    div.blocklyDropdownMenuDiv {
       background-color: #1a1a1a !important;
       border: 1px solid #444 !important;
+      color: #ffffff !important;
     }
 
-    /* Styl tekstu wewnątrz białych/szarych pól na klockach (dropdown / input) */
-    .blocklyFieldDropdown text,
-    .blocklyEditableText text {
-      fill: #ffffff !important; /* Zamienia czarne napisy na klockach na białe */
-    }
-
-    /* Naprawa pól edytowalnych (np. wpisywanie tekstu, liczb) */
+    /* 3. NAPRAWA PÓL WPISYWANIA WARTOŚCI (Liczby, Teksty) */
     .blocklyHtmlInput {
       background-color: #3c3c3c !important;
       color: #ffffff !important;
       border: 1px solid #555 !important;
+      font-family: sans-serif !important;
     }
+
+    /* Zmiana koloru małych strzałek w listach rozwijanych klocków na białe */
     .blocklyDropdownTriangle {
       fill: #ffffff !important;
     }
   </style>
-
-
 </head>
 
 <body>
@@ -451,15 +412,21 @@
         return [f, lua.ORDER_ATOMIC];
       };
 
-      // 3. Inicjalizacja obszaru roboczego
-      workspace = Blockly.inject('blocklyDiv', { toolbox: document.getElementById('toolbox') });
+       // INICJALIZACJA OBSZARU ROBOCZEGO Z OFICJALNYM RETRO-CIEMNYM MOTYWEM
+        workspace = Blockly.inject('blocklyDiv', {
+          toolbox: document.getElementById('toolbox'),
+          theme: Blockly.Theme.defineTheme('gba_dark_theme', {
+            'base': Blockly.Themes.Classic,
+            'componentStyles': {
+              'workspaceBackgroundColour': '#252526', // Jaśniejsze tło robocze (Workspace)
+              'toolboxBackgroundColour': '#111111',   // Głęboka czerń paska kategorii (Toolbox)
+              'toolboxForegroundColour': '#ffffff',   // Białe, czytelne napisy w Toolboxie
+              'flyoutBackgroundColour': '#1a1a1a',    // Ciemny grafit paska z klockami (Flyout)
+              'flyoutForegroundColour': '#ffffff'     // Jasne etykiety wewnątrz paska z klockami
+            }
+          })
+        });
 
-      workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
-        Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
-      });
-
-      setTimeout(function() { Blockly.svgResize(workspace); }, 100);
-    };
 
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
