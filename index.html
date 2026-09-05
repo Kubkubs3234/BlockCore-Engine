@@ -190,8 +190,19 @@
     <category name="Konstrukcja i Czas" colour="#655ba5">
       <block type="gba_start"></block>
       <block type="gba_loop"></block>
+      <block type="gba_for_range"></block>
+      <block type="gba_for_each"></block>
       <block type="gba_wait_ms"></block>
       <block type="gba_break"></block>
+    </category>
+
+    <category name="Obsługa List" colour="#745ba5">
+      <block type="lists_create_with"></block>
+      <block type="gba_list_get"></block>
+      <block type="gba_list_add"></block>
+      <block type="gba_list_set"></block>
+      <block type="gba_list_remove"></block>
+      <block type="gba_list_length"></block>
     </category>
     
     <category name="Logika i Kolizje" colour="#5b80a5">
@@ -236,8 +247,101 @@
     let workspace;
 
     window.onload = function() {
-      // 1. Definicja bloków JSON
+      // 1. Definicja nowych bloków JSON (Pętle FOR oraz Listy)
       Blockly.defineBlocksWithJsonArray([
+        // --- PĘTLA FOR ZAKRESOWY ---
+        {
+          "type": "gba_for_range",
+          "message0": "dla zmiennej %1 od %2 do %3 co %4 wykonuj: %5",
+          "args0": [
+            {"type": "field_variable", "name": "VAR", "variable": "i"},
+            {"type": "input_value", "name": "FROM", "check": "Number"},
+            {"type": "input_value", "name": "TO", "check": "Number"},
+            {"type": "input_value", "name": "STEP", "check": "Number"},
+            {"type": "input_statement", "name": "DO"}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120
+        },
+        // --- PĘTLA FOR EACH (LISTA) ---
+        {
+          "type": "gba_for_each",
+          "message0": "dla każdego elementu %1 z listy %2 wykonuj: %3",
+          "args0": [
+            {"type": "field_variable", "name": "VAR", "variable": "item"},
+            {"type": "input_value", "name": "LIST"},
+            {"type": "input_statement", "name": "DO"}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 120
+        },
+        // --- LISTY: CZYTAJ ELEMENT NR ---
+        {
+          "type": "gba_list_get",
+          "message0": "czytaj element nr %1 z listy %2",
+          "args0": [
+            {"type": "input_value", "name": "INDEX", "check": "Number"},
+            {"type": "input_value", "name": "LIST"}
+          ],
+          "output": null,
+          "colour": 260
+        },
+        // --- LISTY: DODAJ ELEMENT NA POCZĄTKU/KOŃCU ---
+        {
+          "type": "gba_list_add",
+          "message0": "dodaj element %1 na %2 listy %3",
+          "args0": [
+            {"type": "input_value", "name": "ITEM"},
+            {
+              "type": "field_dropdown",
+              "name": "WHERE",
+              "options": [["końcu", "END"], ["początku", "START"]]
+            },
+            {"type": "input_value", "name": "LIST"}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        // --- LISTY: ZASTĄP ELEMENT NR ---
+        {
+          "type": "gba_list_set",
+          "message0": "zastąp element nr %1 w liście %2 wartością %3",
+          "args0": [
+            {"type": "input_value", "name": "INDEX", "check": "Number"},
+            {"type": "input_value", "name": "LIST"},
+            {"type": "input_value", "name": "ITEM"}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        // --- LISTY: USUŃ ELEMENT NR ---
+        {
+          "type": "gba_list_remove",
+          "message0": "usuń element nr %1 z listy %2",
+          "args0": [
+            {"type": "input_value", "name": "INDEX", "check": "Number"},
+            {"type": "input_value", "name": "LIST"}
+          ],
+          "previousStatement": null,
+          "nextStatement": null,
+          "colour": 260
+        },
+        // --- LISTY: DŁUGOŚĆ LISTY ---
+        {
+          "type": "gba_list_length",
+          "message0": "długość listy %1",
+          "args0": [
+            {"type": "input_value", "name": "LIST"}
+          ],
+          "output": "Number",
+          "colour": 260
+        },
+        
+        // --- INNE BLOKI GBA ---
         {
           "type": "gba_loop",
           "message0": "Pętla Gry (Zawsze) %1 wykonuj: %2",
@@ -396,10 +500,68 @@
         }
       ]);
 
-      // 2. Przypisanie generatorów kodu Lua
+      // 2. Przypisanie generatorów kodu Lua dla nowych bloków
       const lua = Blockly.Lua;
       lua.INDENT = '    ';
 
+      // FOR RANGE (LUA)
+      lua.forBlock['gba_for_range'] = function(block) {
+        const varName = lua.getVariableName(block.getFieldValue('VAR'));
+        const from = lua.valueToCode(block, 'FROM', lua.ORDER_ATOMIC) || '1';
+        const to = lua.valueToCode(block, 'TO', lua.ORDER_ATOMIC) || '10';
+        const step = lua.valueToCode(block, 'STEP', lua.ORDER_ATOMIC) || '1';
+        const branch = lua.statementToCode(block, 'DO');
+        return 'for ' + varName + ' = ' + from + ', ' + to + ', ' + step + ' do\n' + branch + 'end\n';
+      };
+
+      // FOR EACH (LUA)
+      lua.forBlock['gba_for_each'] = function(block) {
+        const varName = lua.getVariableName(block.getFieldValue('VAR'));
+        const list = lua.valueToCode(block, 'LIST', lua.ORDER_ATOMIC) || '{}';
+        const branch = lua.statementToCode(block, 'DO');
+        return 'for _, ' + varName + ' in ipairs(' + list + ') do\n' + branch + 'end\n';
+      };
+
+      // LIST GET
+      lua.forBlock['gba_list_get'] = function(block) {
+        const index = lua.valueToCode(block, 'INDEX', lua.ORDER_ATOMIC) || '1';
+        const list = lua.valueToCode(block, 'LIST', lua.ORDER_ATOMIC) || '{}';
+        return [list + '[' + index + ']', lua.ORDER_ATOMIC];
+      };
+
+      // LIST ADD
+      lua.forBlock['gba_list_add'] = function(block) {
+        const item = lua.valueToCode(block, 'ITEM', lua.ORDER_ATOMIC) || 'nil';
+        const where = block.getFieldValue('WHERE');
+        const list = lua.valueToCode(block, 'LIST', lua.ORDER_ATOMIC) || '{}';
+        if (where === 'START') {
+          return 'table.insert(' + list + ', 1, ' + item + ')\n';
+        }
+        return 'table.insert(' + list + ', ' + item + ')\n';
+      };
+
+      // LIST SET
+      lua.forBlock['gba_list_set'] = function(block) {
+        const index = lua.valueToCode(block, 'INDEX', lua.ORDER_ATOMIC) || '1';
+        const list = lua.valueToCode(block, 'LIST', lua.ORDER_ATOMIC) || '{}';
+        const item = lua.valueToCode(block, 'ITEM', lua.ORDER_ATOMIC) || 'nil';
+        return list + '[' + index + '] = ' + item + '\n';
+      };
+
+      // LIST REMOVE
+      lua.forBlock['gba_list_remove'] = function(block) {
+        const index = lua.valueToCode(block, 'INDEX', lua.ORDER_ATOMIC) || '1';
+        const list = lua.valueToCode(block, 'LIST', lua.ORDER_ATOMIC) || '{}';
+        return 'table.remove(' + list + ', ' + index + ')\n';
+      };
+
+      // LIST LENGTH
+      lua.forBlock['gba_list_length'] = function(block) {
+        const list = lua.valueToCode(block, 'LIST', lua.ORDER_ATOMIC) || '{}';
+        return ['#' + list, lua.ORDER_ATOMIC];
+      };
+
+      // POZOSTAŁE BLOKI
       lua.forBlock['gba_loop'] = function(block) {
         return 'while true do\n' +
                '    if _timer_ms > 0 then _timer_ms = _timer_ms - 16 end\n' +
@@ -470,7 +632,7 @@
         return ['math.random(' + from + ', ' + to + ')', lua.ORDER_ATOMIC];
       };
 
-      // INICJALIZACJA OBSZARU ROBOCZEGO
+      // INICJALIZACJA OBSZARU ROBOCZEGO BLOCKLY
       workspace = Blockly.inject('blocklyDiv', {
         toolbox: document.getElementById('toolbox'),
         theme: Blockly.Theme.defineTheme('gba_dark_theme', {
@@ -543,7 +705,7 @@
         });
       }
 
-      // Manifest dopasowany dokładnie do struktury BPCoreEngine
+      // Manifest dopasowany do BPCoreEngine
       let manifestText = "-- Wygenerowano dla BPCore Engine\n";
       manifestText += "return {\n";
       manifestText += '    name = "' + n + '",\n';
@@ -558,10 +720,10 @@
       });
       manifestText += "    },\n";
 
-      // Puste tabele wymagane przez build.lua
+      // Puste tabele
       manifestText += "    tilesets = {},\n";
 
-      // Audio (wcześniej sounds)
+      // Audio
       manifestText += "    audio = {\n";
       detectedSounds.forEach(sound => { 
         manifestText += '        "' + sound + '",\n'; 
