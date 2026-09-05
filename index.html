@@ -101,10 +101,7 @@
       border-radius: 4px; 
     }
 
-    /* ======================================================== */
-    /* MODYFIKACJE CZARNEGO TRYBU DLA GOOGLE BLOCKLY           */
-    /* ======================================================== */
-
+    /* MODYFIKACJE CZARNEGO TRYBU DLA GOOGLE BLOCKLY */
     .blocklyGridPattern line {
       stroke: #333333 !important;
     }
@@ -195,7 +192,6 @@
   <div class="tabs-container">
     <div class="tabs-menu">
       <button class="tab-btn active" onclick="switchTab('details')">📝 Details</button>
-      <button class="tab-btn" onclick="switchTab('assets')">🖼️ Assets</button>
       <button class="tab-btn" onclick="switchTab('code')">🧩 Code</button>
       <button class="export-btn" onclick="exportProject()">💾 Generuj Kod</button>
     </div>
@@ -214,14 +210,7 @@
       </div>
     </div>
 
-    <!-- ZAKŁADKA 2: ASSETS -->
-    <div id="tab-assets" class="tab-content">
-      <h2>Zasoby Graficzne (.bmp)</h2>
-      <input type="file" id="asset-upload" accept=".bmp" onchange="addAsset()">
-      <ul id="asset-list"></ul>
-    </div>
-
-    <!-- ZAKŁADKA 3: CODE -->
+    <!-- ZAKŁADKA 2: CODE -->
     <div id="tab-code" class="tab-content">
       <h2>Układanie Bloków (Lua 5.3)</h2>
       <div id="blocklyDiv"></div>
@@ -291,7 +280,6 @@
 
   <script>
     let workspace;
-    let uploadedAssets = [];
 
     window.onload = function() {
       // 1. Definicja bloków JSON
@@ -392,8 +380,8 @@
         },
         {
           "type": "gba_sound",
-          "message0": "Odtwórz dźwięk ID: %1",
-          "args0": [{"type": "input_value", "name": "SFX_ID", "check": "Number"}],
+          "message0": "Odtwórz dźwięk plik .wav: %1",
+          "args0": [{"type": "input_value", "name": "SFX_FILE", "check": "String"}],
           "previousStatement": null,
           "nextStatement": null,
           "colour": 30
@@ -460,7 +448,6 @@
 
       lua.forBlock['gba_loop'] = function(block) {
         return 'while true do\n' +
-               '    -- Aktualizacja timera w klatce (1 klatka ~= 16.6 ms)\n' +
                '    if _timer_ms > 0 then _timer_ms = _timer_ms - 16 end\n' +
                lua.statementToCode(block, 'DO') + 
                'end\n';
@@ -485,8 +472,7 @@
       };
       lua.forBlock['gba_txtr'] = function(block) {
         const w = lua.valueToCode(block, 'WARSTWA', lua.ORDER_ATOMIC) || '4';
-        let p = lua.valueToCode(block, 'PLIK', lua.ORDER_ATOMIC);
-        if (!p) { p = uploadedAssets.length > 0 ? '"' + uploadedAssets[0] + '"' : '"sprite.bmp"'; }
+        let p = lua.valueToCode(block, 'PLIK', lua.ORDER_ATOMIC) || '"sprite.bmp"';
         return 'txtr(' + w + ', ' + p + ')\n';
       };
       lua.forBlock['gba_spr'] = function(block) {
@@ -507,8 +493,8 @@
         return 'print(' + t + ', ' + x + ', ' + y + ')\n';
       };
       lua.forBlock['gba_sound'] = function(block) {
-        const id = lua.valueToCode(block, 'SFX_ID', lua.ORDER_ATOMIC) || '0';
-        return 'sfx(' + id + ')\n';
+        let f = lua.valueToCode(block, 'SFX_FILE', lua.ORDER_ATOMIC) || '"sfx.wav"';
+        return 'sfx(' + f + ')\n';
       };
       lua.forBlock['gba_btn'] = function(block) {
         return ['btn(' + block.getFieldValue('BUTTON') + ')', lua.ORDER_ATOMIC];
@@ -565,35 +551,34 @@
       if (tabName === 'code' && workspace) { setTimeout(function() { Blockly.svgResize(workspace); }, 50); }
     }
 
-    function addAsset() {
-      const fileInput = document.getElementById('asset-upload');
-      if (!fileInput || fileInput.files.length === 0) return;
-      const name = fileInput.files[0].name;
-      if (!uploadedAssets.includes(name)) {
-        uploadedAssets.push(name);
-        const li = document.createElement('li');
-        li.style = "background:#333; padding:8px; margin-top:5px; border-radius:4px; display:flex; justify-content:space-between;";
-        li.innerHTML = `<span>🖼️ ${name}</span> <button onclick="this.parentElement.remove(); uploadedAssets=uploadedAssets.filter(i=>i!='${name}');" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Usuń</button>`;
-        document.getElementById('asset-list').appendChild(li);
-      }
-      fileInput.value = "";
-    }
-
     function exportProject() {
       const n = document.getElementById('game-name').value || "GraGBA";
       const k = document.getElementById('game-code').value || "AGBA";
       const a = document.getElementById('game-author').value || "Anonim";
       
-      let dynamicAssets = [...uploadedAssets];
+      let detectedSpritesheets = [];
+      let detectedSounds = [];
+
       if (workspace) {
         const allBlocks = workspace.getAllBlocks(false);
         allBlocks.forEach(block => {
+          // Wykrywanie tekstur / grafiki (.bmp)
           if (block.type === 'gba_txtr') {
             const fileBlock = block.getInputTargetBlock('PLIK');
             if (fileBlock && fileBlock.type === 'text') {
               const val = fileBlock.getFieldValue('TEXT');
-              if (val && !dynamicAssets.includes(val)) {
-                dynamicAssets.push(val);
+              if (val && !detectedSpritesheets.includes(val)) {
+                detectedSpritesheets.push(val);
+              }
+            }
+          }
+          // Wykrywanie plików audio (.wav)
+          if (block.type === 'gba_sound') {
+            const soundBlock = block.getInputTargetBlock('SFX_FILE');
+            if (soundBlock && soundBlock.type === 'text') {
+              const soundVal = soundBlock.getFieldValue('TEXT');
+              if (soundVal && !detectedSounds.includes(soundVal)) {
+                detectedSounds.push(soundVal);
               }
             }
           }
@@ -605,11 +590,22 @@
       manifestText += "local app = {\n";
       manifestText += '    name = "' + n + '",\n';
       manifestText += '    gamecode = "' + k + '",\n';
+      manifestText += '    author = "' + a + '",\n';
+      
+      // Sekcja Graficzna
       manifestText += "    spritesheets = {\n";
-      dynamicAssets.forEach(asset => { 
+      detectedSpritesheets.forEach(asset => { 
         manifestText += '        "' + asset + '",\n'; 
       });
       manifestText += "    },\n";
+
+      // Sekcja Audio
+      manifestText += "    sounds = {\n";
+      detectedSounds.forEach(sound => { 
+        manifestText += '        "' + sound + '",\n'; 
+      });
+      manifestText += "    },\n";
+
       manifestText += '    scripts = { "main.lua" }\n';
       manifestText += "}\nreturn app";
       
