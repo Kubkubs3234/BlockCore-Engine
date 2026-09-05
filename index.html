@@ -132,19 +132,27 @@ let workspace;
 let uploadedAssets = [];
 // === REJESTRACJA KLOCKÓW GBA ===
 // === REJESTRACJA KLOCKÓW GBA ===
+// === REJESTRACJA KLOCKÓW GBA ===
 window.onload = function() {
   
-  // 1. WYKRYWANIE GENERATORA UNPKG (POTRÓJNE ZABEZPIECZENIE)
-  const luaGen = (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : 
-                 (window.Lua && window.Lua.luaGenerator) ? window.Lua.luaGenerator : 
-                 (window.Lua) ? window.Lua : Blockly.Lua;
+  // 1. BEZPIECZNE WYKRYWANIE GENERATORA LUA Z UNPKG
+  // Nowe wersje unpkg używają globalnego obiektu 'lua.luaGenerator'
+  let luaGen = (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : null;
+  
+  // Rezerwowe wykrywanie (starsze standardy Blockly lub unpkg)
+  if (!luaGen) {
+    luaGen = window.Lua ? window.Lua : Blockly.Lua;
+  }
 
-  // 2. WYKRYWANIE TABLICY REJESTRACJI BLOKÓW
-  const forBlock = luaGen.forBlock ? luaGen.forBlock : luaGen;
-
-  // Konfiguracja wcięć dla BPCore-Engine
+  // 2. BEZPIECZNE WYKRYWANIE TABLICY REJESTRACJI BLOKÓW
+  // Jeśli luaGen ma wewnętrzne .forBlock (nowsze Blockly), używamy go. Jeśli nie, piszemy bezpośrednio.
+  let forBlock = {};
   if (luaGen) {
-    luaGen.INDENT = '    ';
+    forBlock = luaGen.forBlock ? luaGen.forBlock : luaGen;
+    luaGen.INDENT = '    '; // Standard wcięć dla BPCore-Engine
+  } else {
+    // Awaryjne zabezpieczenie na wypadek braku obiektów sieciowych (zapobiega crashowi)
+    forBlock = Blockly.Blocks; 
   }
 
   // --- DEFINICJE KLOCKÓW I ICH GENERATORÓW ---
@@ -159,11 +167,15 @@ window.onload = function() {
       this.setColour(120);
     }
   };
-  // ZMIANA: Przypisujemy do uniwersalnego obiektu forBlock wykrytego powyżej
-  forBlock['gba_loop'] = function(block) {
-    const doCode = luaGen.statementToCode(block, 'DO');
-    return 'while true do\n' + doCode + 'end\n';
-  };
+  
+  // Przypisanie generatora (z zabezpieczeniem na wypadek braku sieci)
+  if (forBlock) {
+    forBlock['gba_loop'] = function(block) {
+      const doCode = luaGen ? luaGen.statementToCode(block, 'DO') : '-- Brak generatora';
+      return 'while true do\n' + doCode + 'end\n';
+    };
+  }
+
 
   // 7. Klocek: Wyjście z pętli na warunek (break)
   Blockly.Blocks['gba_break'] = {
