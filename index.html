@@ -412,22 +412,36 @@
         return [f, lua.ORDER_ATOMIC];
       };
 
-       // INICJALIZACJA OBSZARU ROBOCZEGO Z OFICJALNYM RETRO-CIEMNYM MOTYWEM
-        workspace = Blockly.inject('blocklyDiv', {
-          toolbox: document.getElementById('toolbox'),
-          theme: Blockly.Theme.defineTheme('gba_dark_theme', {
-            'base': Blockly.Themes.Classic,
-            'componentStyles': {
-              'workspaceBackgroundColour': '#252526', // Jaśniejsze tło robocze (Workspace)
-              'toolboxBackgroundColour': '#111111',   // Głęboka czerń paska kategorii (Toolbox)
-              'toolboxForegroundColour': '#ffffff',   // Białe, czytelne napisy w Toolboxie
-              'flyoutBackgroundColour': '#1a1a1a',    // Ciemny grafit paska z klockami (Flyout)
-              'flyoutForegroundColour': '#ffffff'     // Jasne etykiety wewnątrz paska z klockami
-            }
-          })
+             // INICJALIZACJA OBSZARU ROBOCZEGO Z OFICJALNYM RETRO-CIEMNYM MOTYWEM
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        theme: Blockly.Theme.defineTheme('gba_dark_theme', {
+          'base': Blockly.Themes.Classic,
+          'componentStyles': {
+            'workspaceBackgroundColour': '#252526', // Jaśniejsze tło robocze (Workspace)
+            'toolboxBackgroundColour': '#111111',   // Głęboka czerń paska kategorii (Toolbox)
+            'toolboxForegroundColour': '#ffffff',   // Białe, czytelne napisy w Toolboxie
+            'flyoutBackgroundColour': '#1a1a1a',    // Ciemny grafit paska z klockami (Flyout)
+            'flyoutForegroundColour': '#ffffff'     // Jasne etykiety wewnątrz paska z klockami
+          }
+        })
+      });
+
+      // Rejestracja przycisku "Stwórz zmienną..." z menu bocznego
+      if (workspace && workspace.registerButtonCallback) {
+        workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
+          Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace());
         });
+      }
+
+      // Odświeżenie wymiarów okna na start
+      setTimeout(function() {
+        if (workspace) { Blockly.svgResize(workspace); }
+      }, 100);
+    }; // <--- TO JEST KLUCZOWA KLAMRA! Zamyka całe window.onload i naprawia błąd SyntaxError.
 
 
+    // === FUNKCJA NAWIGACJI ===
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
