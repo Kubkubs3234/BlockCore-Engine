@@ -8,7 +8,7 @@
   <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
   
-  <!-- ZMIANA: Załadowanie generatora LUA zamiast JavaScript -->
+  <!-- Załadowanie generatora LUA -->
   <script src="https://unpkg.com/blockly/lua_compressed.js"></script>
   <script src="https://unpkg.com/blockly/msg/en.js"></script>
 
@@ -66,7 +66,7 @@
     .form-group { margin-bottom: 15px; }
     label { display: inline-block; width: 140px; font-weight: bold; }
     
-    /* POLA TEKSTOWE NA STRONIE - JASNOSZARE Z CZARNYM TEKSTEM */
+    /* POLA TEKSTOWE NA STRONIE */
     input[type="text"] { 
       background: #f0f0f0; 
       color: #000000; 
@@ -77,7 +77,7 @@
       font-weight: 500;
     }
     
-    /* KONTENER BLOCKLY (WYDŁUŻONY DO 700PX) */
+    /* KONTENER BLOCKLY */
     #blocklyDiv { 
       height: 700px; 
       width: 100%; 
@@ -102,7 +102,7 @@
     }
 
     /* ======================================================== */
-    /* DESIGN MODYFIKACJI CZARNEGO TRYBU DLA GOOGLE BLOCKLY     */
+    /* MODYFIKACJE CZARNEGO TRYBU DLA GOOGLE BLOCKLY           */
     /* ======================================================== */
 
     /* Kolor siatki/kropek w tle ciemnego pola roboczego */
@@ -110,11 +110,7 @@
       stroke: #333333 !important;
     }
 
-    /* ======================================================== */
-    /* NAPRAWA CZCIONEK NA KLOCKACH ORAZ W MENU ROZWIJANYCH     */
-    /* ======================================================== */
-    
-    /* 1. Wymuszenie jasnego/białego tekstu dla zwykłych etykiet klocków */
+    /* Wygląd etykiet tekstowych klocków */
     .blocklyText,
     text.blocklyText,
     .blocklyFlyoutLabelText {
@@ -122,7 +118,7 @@
       font-family: 'Segoe UI', sans-serif !important;
     }
 
-    /* 2. MENU ROZWIJANE (DROP DOWN) - JASNOSZARE TŁO I CZARNY TEKST W ROZWINIĘTYM MENU */
+    /* MENU ROZWIJANE (POPUP) */
     .blocklyDropdownMenu,
     .blocklyDropdownMenuDiv,
     div.blocklyDropdownMenuDiv,
@@ -134,7 +130,7 @@
       border-radius: 4px !important;
     }
 
-    /* CZARNY TEKST W OPCJACH MENU */
+    /* CZARNY TEKST W OPCJACH POPUP MENU */
     .goog-menuitem,
     .goog-menuitem-content,
     .goog-menuitem span,
@@ -147,7 +143,6 @@
       font-weight: 500 !important;
     }
 
-    /* PODŚWIETLENIE PO NAJECHANIU MYSZKĄ */
     .goog-menuitem-highlight,
     .goog-menuitem:hover,
     .blocklyMenuItemHighlight {
@@ -159,20 +154,38 @@
       color: #ffffff !important;
     }
 
-    /* 3. ZMIANA NA CZARNY TEKST DLA POL DROPDOWN NA SAMYCH KLOCKACH */
+    /* ======================================================== */
+    /* NAPRAWA POL INPUT / DROPDOWN / NUMBER NA KLOCKACH        */
+    /* ======================================================== */
+
+    /* Czarny tekst w drop listach, polach edycyjnych tekstowych oraz liczbowych */
     .blocklyFieldDropdown text,
-    g.blocklyFieldDropdown text,
-    .blocklyDropdownText {
+    .blocklyFieldVariable text,
+    .blocklyFieldTextInput text,
+    .blocklyFieldNumber text,
+    .blocklyEditableText text,
+    g.blocklyEditableText text,
+    g.blocklyFieldDropdown text {
       fill: #000000 !important;
       font-weight: 600 !important;
     }
 
-    /* MAŁE STRZAŁKI W POLACH WYBORU NA CZARNO */
+    /* Jasne tło prostokątów wewnątrz klocków (pola edycji i listy) */
+    .blocklyEditableText > rect,
+    .blocklyFieldDropdown > rect,
+    .blocklyFieldVariable > rect,
+    .blocklyFieldTextInput > rect,
+    .blocklyFieldNumber > rect {
+      fill: #e0e0e0 !important;
+      fill-opacity: 0.9 !important;
+    }
+
+    /* Strzałki w rozwijanych listach na czarno */
     .blocklyDropdownTriangle {
       fill: #000000 !important;
     }
 
-    /* 4. POLA EDYCJI W BLOCKLY (WPISYWANIE WARTOŚCI TEKSTOWYCH I LICZB) */
+    /* Pole edycji aktywnej (wpisywanie z klawiatury) */
     .blocklyHtmlInput {
       background-color: #f0f0f0 !important;
       color: #000000 !important;
