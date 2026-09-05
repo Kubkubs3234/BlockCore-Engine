@@ -139,19 +139,32 @@
       stroke: #3c3c3c !important;
     }
 
-    /* 3. NAPRAWA BIAŁEGO TOOLBARU (FLYOUT) */
-    /* Zmieniamy tło wyskakującego okna z klockami na ciemne */
-    .blocklyFlyoutBackground {
+        /* ======================================================== */
+    /* 3. NAPRAWA BIAŁEGO TOOLBARU (FLYOUT)                     */
+    /* ======================================================== */
+    
+    /* Precyzyjny selektor SVG wymuszający ciemny grafit na pasku */
+    path.blocklyFlyoutBackground {
       fill: #1a1a1a !important;
-      fill-opacity: 0.95 !important; /* Minimalna przezroczystość dla nowoczesnego wyglądu */
-      stroke: #333333 !important;   /* Delikatna ramka odcinająca od pola roboczego */
+      fill-opacity: 0.95 !important;
+      stroke: #333333 !important;
+      stroke-width: 1px !important;
     }
 
-    /* Zmieniamy napisy informacyjne wewnątrz okna z klockami na jasne */
-    .blocklyFlyoutLabelText {
+    /* Zmiana koloru klocków-etykiet i tekstu informacyjnego wewnątrz toolbaru */
+    .blocklyFlyoutLabelText, 
+    .blocklyFlyout text, 
+    g.blocklyFlyoutLabelText text {
       fill: #ffffff !important;
       font-weight: bold !important;
+      font-family: sans-serif !important;
     }
+
+    /* Opcjonalnie: Zmiana tła przycisków wewnątrz paska narzędzi na ciemniejsze */
+    .blocklyFlyoutButton background {
+      fill: #333333 !important;
+    }
+
   </style>
 
 <body>
