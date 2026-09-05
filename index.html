@@ -102,13 +102,17 @@
     /* DESIGN MODYFIKACJI CZARNEGO TRYBU DLA GOOGLE BLOCKLY     */
     /* ======================================================== */
 
+        /* ======================================================== */
+    /* DESIGN MODYFIKACJI CZARNEGO TRYBU DLA GOOGLE BLOCKLY     */
+    /* ======================================================== */
+
     /* 1. CZARNE TŁO DLA MENU BOCZNEGO (TOOLBOX) */
     .blocklyToolboxBackground {
       background-color: #111111 !important;
       border-right: 1px solid #333 !important;
     }
 
-    /* JAsne i czytelne napisy w czarnym menu boczny */
+    /* Jasne i czytelne napisy w czarnym menu bocznym */
     .blocklyTreeLabel {
       color: #e0e0e0 !important;
       font-family: sans-serif;
@@ -127,16 +131,29 @@
     /* 2. JAŚNIEJSZE POLE UKŁADANIA BLOKÓW (WORKSPACE) */
     .blocklyMainBackground {
       stroke: none !important;
-      fill: #2d2d2d !important; /* Odcień szarości jaśniejszy od paska menu */
+      fill: #2d2d2d !important; /* Szary odcień, jaśniejszy od paska menu */
     }
 
     /* Kolor siatki (kropek/linii) w tle roboczym */
     .blocklyGridPattern line {
       stroke: #3c3c3c !important;
     }
+
+    /* 3. NAPRAWA BIAŁEGO TOOLBARU (FLYOUT) */
+    /* Zmieniamy tło wyskakującego okna z klockami na ciemne */
+    .blocklyFlyoutBackground {
+      fill: #1a1a1a !important;
+      fill-opacity: 0.95 !important; /* Minimalna przezroczystość dla nowoczesnego wyglądu */
+      stroke: #333333 !important;   /* Delikatna ramka odcinająca od pola roboczego */
+    }
+
+    /* Zmieniamy napisy informacyjne wewnątrz okna z klockami na jasne */
+    .blocklyFlyoutLabelText {
+      fill: #ffffff !important;
+      font-weight: bold !important;
+    }
   </style>
 
-</head>
 <body>
 
   <h1>BlockCore Engine</h1>
