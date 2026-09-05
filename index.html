@@ -108,25 +108,37 @@
       border-radius: 4px; 
     }
 
-        /* ======================================================== */
+       /* ======================================================== */
     /* DESIGN MODYFIKACJI CZARNEGO TRYBU DLA GOOGLE BLOCKLY     */
     /* ======================================================== */
 
-    /* 1. CAŁKOWICIE CZARNY PASEK KATEGORII (TOOLBOX) */
+    /* 1. CAŁKOWICIE CZARNY PASEK KATEGORII (TOOLBOX - NAPRAWA JASNEGO TŁA) */
+    .blocklyToolboxDiv, 
+    div.blocklyToolboxDiv,
     .blocklyToolboxBackground {
       background-color: #111111 !important;
-      border-right: 1px solid #222 !important;
+      border-right: 1px solid #2d2d2d !important;
+      color: #e0e0e0 !important;
     }
 
-    /* Jasne i czytelne napisy kategorii na czarnym tle */
-    .blocklyTreeLabel {
+    /* Jasne i bardzo czytelne napisy kategorii na czarnym pasku */
+    .blocklyTreeLabel,
+    span.blocklyTreeLabel,
+    .blocklyTreeRow span {
       color: #e0e0e0 !important;
-      font-family: sans-serif !important;
+      font-family: 'Segoe UI', sans-serif !important;
       font-size: 13px !important;
     }
 
-    /* Podświetlenie wybranej kategorii */
-    .blocklyTreeRow.blocklyTreeSelected {
+    /* Wygląd wiersza kategorii (usuwamy domyślne białawe tła) */
+    .blocklyTreeRow {
+      background: transparent !important;
+      border: none !important;
+    }
+
+    /* Podświetlenie aktywnej/klikniętej kategorii w menu */
+    .blocklyTreeRow.blocklyTreeSelected,
+    div.blocklyTreeRow.blocklyTreeSelected {
       background-color: #007acc !important;
     }
     .blocklyTreeRow.blocklyTreeSelected .blocklyTreeLabel {
@@ -134,53 +146,59 @@
       font-weight: bold !important;
     }
 
-    /* 2. CIEMNE TŁO PASKA Z KLOCKAMI (FLYOUT) */
-    path.blocklyFlyoutBackground {
+    /* 2. PASKA Z KLOCKAMI (FLYOUT) - ZOSTAJE CZARNY */
+    path.blocklyFlyoutBackground,
+    .blocklyFlyoutBackground {
       fill: #1a1a1a !important;
       fill-opacity: 0.98 !important;
       stroke: #2d2d2d !important;
-      stroke-width: 1px !important;
     }
 
     /* 3. DOCIEMNIONE POLE ROBOCZE (WORKSPACE) */
     .blocklyMainBackground {
       stroke: none !important;
-      fill: #252526 !important; /* Spójny odcień z resztą edytora */
+      fill: #252526 !important;
     }
-
-    /* Kolor siatki/kropek w tle */
     .blocklyGridPattern line {
       stroke: #333333 !important;
     }
 
     /* ======================================================== */
-    /* 4. NAPRAWA KOLORÓW CZCIONEK NA KLOCKACH (A, ITEM, CYFRY)  */
+    /* 4. NAPRAWA NAPISÓW NA KLOCKACH (A, ITEM, CYFRY, DROPDOWN)*/
     /* ======================================================== */
     
-    /* Wymuszenie jasnego koloru tekstu dla wszystkich elementów pól na klockach */
+    /* Wymuszenie jasnego/białego tekstu na samych klockach i ich polach */
     .blocklyText,
-    .blocklyEditableText text,
-    .blocklyFieldDropdown text,
-    .blocklyFlyoutLabelText,
-    text.blocklyText {
-      fill: #ffffff !important; /* Teksty na klockach stają się białe */
-      color: #ffffff !important;
+    text.blocklyText,
+    .blocklyFlyoutLabelText {
+      fill: #ffffff !important;
       font-family: sans-serif !important;
     }
 
-    /* Naprawa pól edytowalnych (np. wpisywanie nazw zmiennych, liczb) */
+    /* Ciemne tło dla rozwijanych list na klockach (np. wybór przycisku A, B, item) */
+    .blocklyDropdownMenu,
+    .blocklyDropdownMenuDiv {
+      background-color: #1a1a1a !important;
+      border: 1px solid #444 !important;
+    }
+
+    /* Styl tekstu wewnątrz białych/szarych pól na klockach (dropdown / input) */
+    .blocklyFieldDropdown text,
+    .blocklyEditableText text {
+      fill: #ffffff !important; /* Zamienia czarne napisy na klockach na białe */
+    }
+
+    /* Naprawa pól edytowalnych (np. wpisywanie tekstu, liczb) */
     .blocklyHtmlInput {
       background-color: #3c3c3c !important;
       color: #ffffff !important;
       border: 1px solid #555 !important;
-      font-family: sans-serif !important;
     }
-
-    /* Zmiana koloru strzałek w listach rozwijanych (dropdown) na jasne */
     .blocklyDropdownTriangle {
       fill: #ffffff !important;
     }
   </style>
+
 
 </head>
 
