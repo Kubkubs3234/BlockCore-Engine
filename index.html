@@ -224,7 +224,7 @@ window.onload = function() {
     return 'print(' + t + ', ' + x + ', ' + y + ')\n';
   };
 
-  // 10. Klocek: Czy kolizja AABB
+   // 10. CAŁKOWICIE BEZPIECZNA DEFINICJA I GENERATOR DLA KOLIZJI
   Blockly.Blocks['gba_collision'] = {
     init: function() {
       this.appendDummyInput().appendField("Kolizja obiektu 1 X:");
@@ -236,18 +236,27 @@ window.onload = function() {
       this.appendDummyInput().appendField("Y:");
       this.appendValueInput("Y2").setCheck("Number");
       this.setInputsInline(true);
-      this.setOutput(true, "Boolean");
+      this.setOutput(true, "Boolean"); // Blok zwraca wartość prawda/fałsz
       this.setColour(210);
     }
   };
-  forBlock['gba_collision'] = function(block) {
-    const x1 = luaGen.valueToCode(block, 'X1', luaGen.ORDER_ATOMIC) || '0';
-    const y1 = luaGen.valueToCode(block, 'Y1', luaGen.ORDER_ATOMIC) || '0';
-    const x2 = luaGen.valueToCode(block, 'X2', luaGen.ORDER_ATOMIC) || '0';
-    const y2 = luaGen.valueToCode(block, 'Y2', luaGen.ORDER_ATOMIC) || '0';
-    const formula = x1 + ' < ' + x2 + ' + 16 and ' + x1 + ' + 16 > ' + x2 + ' and ' + y1 + ' < ' + y2 + ' + 16 and ' + y1 + ' + 16 > ' + y2;
-    return [formula, luaGen.ORDER_ATOMIC];
-  };
+
+  // Rejestracja translatora Lua dla kolizji
+  if (forBlock) {
+    forBlock['gba_collision'] = function(block) {
+      const x1 = luaGen ? luaGen.valueToCode(block, 'X1', 99) : '0';
+      const y1 = luaGen ? luaGen.valueToCode(block, 'Y1', 99) : '0';
+      const x2 = luaGen ? luaGen.valueToCode(block, 'X2', 99) : '0';
+      const y2 = luaGen ? luaGen.valueToCode(block, 'Y2', 99) : '0';
+      
+      // Formuła matematyczna AABB 16x16
+      const formula = x1 + ' < ' + x2 + ' + 16 and ' + x1 + ' + 16 > ' + x2 + ' and ' + y1 + ' < ' + y2 + ' + 16 and ' + y1 + ' + 16 > ' + y2;
+      
+      // WAZNE: Dla klocków zwracających wartość (setOutput) zwracamy tablicę!
+      return [formula, 99]; 
+    };
+  }
+
 
     // 2. Wczytywanie tekstur (txtr)
   Blockly.Blocks['gba_txtr'] = {
