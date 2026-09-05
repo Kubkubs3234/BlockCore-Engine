@@ -243,6 +243,7 @@
     
     <category name="Logika i Kolizje" colour="#5b80a5">
       <block type="controls_if"></block>
+      <block type="logic_negate"></block> <!-- DODANY BLOK ZAPRZECZENIA "NOT" -->
       <block type="logic_compare"></block>
       <block type="logic_operation"></block>
       <block type="logic_boolean"></block>
@@ -562,7 +563,6 @@
       if (workspace) {
         const allBlocks = workspace.getAllBlocks(false);
         allBlocks.forEach(block => {
-          // Wykrywanie tekstur / grafiki (.bmp)
           if (block.type === 'gba_txtr') {
             const fileBlock = block.getInputTargetBlock('PLIK');
             if (fileBlock && fileBlock.type === 'text') {
@@ -572,7 +572,6 @@
               }
             }
           }
-          // Wykrywanie plików audio (.wav)
           if (block.type === 'gba_sound') {
             const soundBlock = block.getInputTargetBlock('SFX_FILE');
             if (soundBlock && soundBlock.type === 'text') {
@@ -592,14 +591,12 @@
       manifestText += '    gamecode = "' + k + '",\n';
       manifestText += '    author = "' + a + '",\n';
       
-      // Sekcja Graficzna
       manifestText += "    spritesheets = {\n";
       detectedSpritesheets.forEach(asset => { 
         manifestText += '        "' + asset + '",\n'; 
       });
       manifestText += "    },\n";
 
-      // Sekcja Audio
       manifestText += "    sounds = {\n";
       detectedSounds.forEach(sound => { 
         manifestText += '        "' + sound + '",\n'; 
