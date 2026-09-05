@@ -328,42 +328,87 @@ function addAsset() {
   }
   fileInput.value = "";
 }
-
-// === EKSPORT GRY ===
+// === GENEROWANIE I EKSPORT PLIKÓW (WERSJA Z INICJALIZACJĄ GENERATORA) ===
 function exportProject() {
   const n = document.getElementById('game-name').value || "GraGBA";
   const k = document.getElementById('game-code').value || "AGBA";
   const a = document.getElementById('game-author').value || "Anonim";
   
+  // 1. ZBIERANIE ASSETÓW Z KLOCKÓW DLA PLIKU MANIFESTU
   let dynamicAssets = [...uploadedAssets];
   if (workspace) {
-    workspace.getAllBlocks(false).forEach(block => {
+    const allBlocks = workspace.getAllBlocks(false);
+    allBlocks.forEach(block => {
       if (block.type === 'gba_txtr') {
         const fileBlock = block.getInputTargetBlock('PLIK');
         if (fileBlock && fileBlock.type === 'text') {
           const val = fileBlock.getFieldValue('TEXT');
-          if (val && !dynamicAssets.includes(val)) { dynamicAssets.push(val); }
+          if (val && !dynamicAssets.includes(val)) {
+            dynamicAssets.push(val);
+          }
         }
       }
     });
   }
 
-  let manifestText = "-- Wygenerowano dla BPCore\nlocal app = {\n";
-  manifestText += '    name = "' + n + '",\n    gamecode = "' + k + '",\n    spritesheets = {\n';
-  dynamicAssets.forEach(asset => { manifestText += '        "' + asset + '",\n'; });
-  manifestText += '    },\n    scripts = { "main.lua" }\n}\nreturn app';
+  // 2. BUDOWANIE PLIKU MANIFEST.LUA
+  let manifestText = "-- Wygenerowano dla BPCore\n";
+  manifestText += "local app = {\n";
+  manifestText += '    name = "' + n + '",\n';
+  manifestText += '    gamecode = "' + k + '",\n';
+  manifestText += "    spritesheets = {\n";
+  dynamicAssets.forEach(asset => { 
+    manifestText += '        "' + asset + '",\n'; 
+  });
+  manifestText += "    },\n";
+  manifestText += '    scripts = { "main.lua" }\n';
+  manifestText += "}\nreturn app";
+  
+  // Wrzucenie manifestu do lewego okienka
   document.getElementById('output-manifest').value = manifestText;
 
+  // 3. GENEROWANIE KODU MAIN.LUA
   let mainLuaText = "";
+  
   try {
-    const gen = window.lua ? window.lua.luaGenerator : Blockly.Lua;
-    if (workspace && gen && typeof gen.workspaceToCode === "function") {
+    // Odnajdujemy poprawny obiekt generatora dostarczony przez unpkg
+    const gen = (window.lua && window.lua.luaGenerator) ? window.lua.luaGenerator : 
+                 (window.Lua && window.Lua.luaGenerator) ? window.Lua.luaGenerator : 
+                 (window.Lua) ? window.Lua : Blockly.Lua;
+    
+    if (workspace && gen) {
+      // WAŻNE DLA UNPKG: Konfiguracja formatu wcięć dla wybranego generatora
       gen.INDENT = '    ';
-      mainLuaText = gen.workspaceToCode(workspace);
-    }
-  } catch (err) { mainLuaText = "-- Błąd: " + err.message; }
+      
+      // WYMUSZENIE INICJALIZACJI: Łączymy definicje klocków z naszym obszarem roboczym
+      if (typeof gen.init === "function") {
+        gen.init(workspace);
+      }
 
-  if (!mainLuaText || mainLuaText.trim() === "") { mainLuaText = "-- Układaj bloki, aby wygenerować kod main.lua"; }
+      // Generowanie kodu ze wszystkich ułożonych klocków
+      if (typeof gen.workspaceToCode === "function") {
+        mainLuaText = gen.workspaceToCode(workspace);
+      } 
+      // Rezerwowe wywołanie dla natywnego rdzenia Blockly
+      else if (Blockly.Lua && typeof Blockly.Lua.workspaceToCode === "function") {
+        Blockly.Lua.INDENT = '    ';
+        mainLuaText = Blockly.Lua.workspaceToCode(workspace);
+      }
+    } else {
+      mainLuaText = "-- Błąd: Nie odnaleziono generatora języka Lua.";
+    }
+  } catch (err) {
+    // Jeśli skrypt napotka problem, wyświetli jego opis w prawym oknie
+    mainLuaText = "-- Błąd krytyczny generatora: " + err.message + "\n";
+  }
+
+  // Jeśli kod wyszedł pusty lub zawiera tylko białe znaki
+  if (!mainLuaText || mainLuaText.trim() === "") {
+    mainLuaText = "-- Układaj bloki w pętli gry, aby wygenerować kod main.lua\n";
+    mainLuaText += "-- (Upewnij się, że klocki są ze sobą prawidłowo połączone!)";
+  }
+
+  // Wrzucenie gotowego kodu Lua do prawego okienka
   document.getElementById('output-main').value = mainLuaText;
 }
 
