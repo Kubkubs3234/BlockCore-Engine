@@ -108,24 +108,24 @@
       border-radius: 4px; 
     }
 
-    /* ======================================================== */
+        /* ======================================================== */
     /* DESIGN MODYFIKACJI CZARNEGO TRYBU DLA GOOGLE BLOCKLY     */
     /* ======================================================== */
 
-    /* 1. CZARNE TŁO DLA MENU BOCZNEGO (TOOLBOX) */
+    /* 1. CAŁKOWICIE CZARNY PASEK KATEGORII (TOOLBOX) */
     .blocklyToolboxBackground {
       background-color: #111111 !important;
-      border-right: 1px solid #333 !important;
+      border-right: 1px solid #222 !important;
     }
 
-    /* Jasne i czytelne napisy w czarnym menu bocznym */
+    /* Jasne i czytelne napisy kategorii na czarnym tle */
     .blocklyTreeLabel {
       color: #e0e0e0 !important;
-      font-family: sans-serif;
+      font-family: sans-serif !important;
       font-size: 13px !important;
     }
 
-    /* Podświetlenie aktywnej kategorii w menu */
+    /* Podświetlenie wybranej kategorii */
     .blocklyTreeRow.blocklyTreeSelected {
       background-color: #007acc !important;
     }
@@ -134,44 +134,54 @@
       font-weight: bold !important;
     }
 
-    /* 2. JAŚNIEJSZE POLE UKŁADANIA BLOKÓW (WORKSPACE) */
-    .blocklyMainBackground {
-      stroke: none !important;
-      fill: #2d2d2d !important; /* Szary odcień, jaśniejszy od paska menu */
-    }
-
-    /* Kolor siatki (kropek/linii) w tle roboczym */
-    .blocklyGridPattern line {
-      stroke: #3c3c3c !important;
-    }
-
-    /* ======================================================== */
-    /* 3. NAPRAWA BIAŁEGO TOOLBARU (FLYOUT)                     */
-    /* ======================================================== */
-    
-    /* Precyzyjny selektor SVG wymuszający ciemny grafit na pasku */
+    /* 2. CIEMNE TŁO PASKA Z KLOCKAMI (FLYOUT) */
     path.blocklyFlyoutBackground {
       fill: #1a1a1a !important;
-      fill-opacity: 0.95 !important;
-      stroke: #333333 !important;
+      fill-opacity: 0.98 !important;
+      stroke: #2d2d2d !important;
       stroke-width: 1px !important;
     }
 
-    /* Zmiana koloru klocków-etykiet i tekstu informacyjnego wewnątrz toolbaru */
-    .blocklyFlyoutLabelText, 
-    .blocklyFlyout text, 
-    g.blocklyFlyoutLabelText text {
-      fill: #ffffff !important;
-      font-weight: bold !important;
+    /* 3. DOCIEMNIONE POLE ROBOCZE (WORKSPACE) */
+    .blocklyMainBackground {
+      stroke: none !important;
+      fill: #252526 !important; /* Spójny odcień z resztą edytora */
+    }
+
+    /* Kolor siatki/kropek w tle */
+    .blocklyGridPattern line {
+      stroke: #333333 !important;
+    }
+
+    /* ======================================================== */
+    /* 4. NAPRAWA KOLORÓW CZCIONEK NA KLOCKACH (A, ITEM, CYFRY)  */
+    /* ======================================================== */
+    
+    /* Wymuszenie jasnego koloru tekstu dla wszystkich elementów pól na klockach */
+    .blocklyText,
+    .blocklyEditableText text,
+    .blocklyFieldDropdown text,
+    .blocklyFlyoutLabelText,
+    text.blocklyText {
+      fill: #ffffff !important; /* Teksty na klockach stają się białe */
+      color: #ffffff !important;
       font-family: sans-serif !important;
     }
 
-    /* Opcjonalnie: Zmiana tła przycisków wewnątrz paska narzędzi na ciemniejsze */
-    .blocklyFlyoutButton background {
-      fill: #333333 !important;
+    /* Naprawa pól edytowalnych (np. wpisywanie nazw zmiennych, liczb) */
+    .blocklyHtmlInput {
+      background-color: #3c3c3c !important;
+      color: #ffffff !important;
+      border: 1px solid #555 !important;
+      font-family: sans-serif !important;
     }
 
+    /* Zmiana koloru strzałek w listach rozwijanych (dropdown) na jasne */
+    .blocklyDropdownTriangle {
+      fill: #ffffff !important;
+    }
   </style>
+
 </head>
 
 <body>
