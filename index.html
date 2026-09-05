@@ -25,11 +25,28 @@
     input[type="text"] { background: #3c3c3c; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 4px; width: 200px; }
     #blocklyDiv { height: 700px; width: 100%; border: 1px solid #444; }
     .code-box { width: 100%; height: 200px; background: #1a1a1a; color: #fff; border: 1px solid #444; font-family: monospace; padding: 10px; resize: none; box-sizing: border-box; }
+    /* WYMUSZENIE CZARNEGO KOLORU NAPISÓW W MENU BOCZNYM BLOCKLY */
+    .blocklyTreeLabel {
+      color: #000000 !important;
+      font-weight: bold !important;
+      font-family: sans-serif;
+    }
+
+    /* Dostosowanie szerokości pól wejściowych dla lepszego wyglądu */
+    input[type="text"] { 
+      background: #3c3c3c; 
+      color: #fff; 
+      border: 1px solid #555; 
+      padding: 8px; 
+      border-radius: 4px; 
+      width: 250px; 
+    }
+
   </style>
 </head>
 <body>
 
-  <h1>🎮 GBA Lua Creator</h1>
+  <h1>BlockCore Engine</h1>
   
   <div class="tabs-container">
     <div class="tabs-menu">
@@ -41,24 +58,19 @@
 
     <!-- ZAKŁADKA 1: DETAILS -->
     <div id="tab-details" class="tab-content active">
-      <h2>Ustawienia Projektu GBA</h2>
+      <h2>GBA Game Details</h2>
       <div class="form-group">
-        <label>Nazwa Gry: </label><input type="text" id="game-name" value="MojaGraGBA">
+        <label>Name: </label><input type="text" id="game-name" value="MojaGraGBA">
       </div>
       <div class="form-group">
-        <label>Kod (4 litery): </label><input type="text" id="game-code" value="AGBA" maxlength="4">
+        <label>Code: (4 letters): </label><input type="text" id="game-code" value="AGBA" maxlength="4">
       </div>
       <div class="form-group">
-        <label>Autor: </label><input type="text" id="game-author" value="Anonim">
+        <label>Author: </label><input type="text" id="game-author" value="Anonim">
       </div>
     </div>
 
-    <!-- ZAKŁADKA 2: ASSETS -->
-    <div id="tab-assets" class="tab-content">
-      <h2>Zasoby Graficzne (.bmp)</h2>
-      <input type="file" id="asset-upload" accept=".bmp" onchange="addAsset()">
-      <ul id="asset-list"></ul>
-    </div>
+
 
     <!-- ZAKŁADKA 3: CODE -->
     <div id="tab-code" class="tab-content">
